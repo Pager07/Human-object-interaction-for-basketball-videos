@@ -1,0 +1,64 @@
+Project 
+    - What other methods are avialable to detect ball??
+        - Resenet50 CNN regression?
+            - What does the dataset format look like? (Image and points)
+                - A points file txt file
+                    - With same filename
+                    
+            - What is a datapoint going to be?
+            - Are there any such dataset ot there?
+                -http://ipl.ce.sharif.edu/ball_datasets.html
+                - http://basketballattention.appspot.com/
+            - How is the process of collecting the dataset?
+
+Download videos
+    - Take screen shots 
+    - Label them
+
+
+- I am trying to test CAT regression on a single image 
+    -  export the export.pkl file 
+    -  It contains the following
+        - (the model, the weights but also some metadata like the classes or the transforms/normalization used).
+    - Yes, Restnet is able to predict where ears and nose even in occlusion.
+
+STEPS:
+        -  Create the learner
+        -  Load the weights
+        - Export the learner
+
+
+Creating Basketball DataSet
+    - Get frames at given timstamps
+        - x1000 to get timestamp in mircoseconds
+        - Convert it to seconds
+        - https://www.youtube.com/watch?time_continue=SECONDS!!!!!&v=VIDEOIDDDD
+            -example: https://www.youtube.com/watch?time_continue=2805&v=AALM9_RgV6c
+        - Is there a way I can extract out the frame form youtube videos?
+    - Given an Screen shot I know where the ball is
+    - Get screen shots
+        - Get a screen shot using code (DONE)
+            - Login to youtube 
+            - Use the page to search for a vidoeo's screen shot 
+        -Get screen shots of the sent urls 
+            - resize the image in JS
+            - Redirect the chrome downloaded item to a dataset folder
+            - Build a function that send a JSON STRING
+                - REQUEST STRING:
+                        - '{links:{0:'link1',1:link2.....}}
+                        - '{links:'link1,line2.....'}' (USING THIS)
+                    - What is the best way to send this data
+                        - We need to use a middleeware to be able recieve data outside params 
+                            - var bodyParser = require('body-parser');
+                            - app.use(bodyParser.urlencoded({ extended: false }))
+                            - data will be available on req.body.links
+                            - app.post() will take aynsc function
+                - JSONIFY THEM 
+                - PROCCESS EACH LINK 
+                - SEND THE IMAGE
+                - REAPEAT UNTIL ALL THE LINKS HAVE BEEN PPROCCESSD!
+                
+            
+        
+
+
