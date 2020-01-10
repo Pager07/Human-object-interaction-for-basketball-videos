@@ -1,0 +1,154 @@
+Resources:
+Article that let to discovery of EDGETPU API:
+	-  https://blog.goo.ne.jp/hanalili/e/d6e70bea5d8a454a94b007f14308e04b
+	- THey are using 
+
+- I dont know how to get things running
+	- I Just want to run some Pose Estimation Network
+		- PoseNet
+		- Stacked hour cnn
+	- I dont know how to take some else project and use it 
+		- Try to find people who can show you how to use a project
+			- Youtube?
+			- Medium?
+	- I dont know which github project to use
+	- I can clone the file 
+	- How do I run it
+
+I Just relaised that I dont have to train a model and do the complicated stuff that I have not learnt. Its preety much use whats out there to build something that kinda works
+	- 
+- DEBUG
+	-  in HG load_stat_dict_from_url 
+		- set the parameter map_location to map_location=torch.device('cpu')
+Issue 1
+does posenet work if there are multiple people in an image?
+	- Single pose posenet cant but multiple pose 
+	-multi-person pose estimation algorithm 
+		- https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5
+Issue 2
+There seems to be only mobilenet version of posenet not RestNet50 for python
+	- Moblienet is not too accurate 
+	- I need RestNet50
+	- The link below has javascriipt version of Posenet
+		- https://github.com/tensorflow/tfjs-models/tree/master/posenet
+
+I am trying out javascript/tensorflow.js poseNet
+	- I might use Webttech template to get thing running
+		- Loaded img file, it had to be in static file
+
+
+DEBUG
+	- Throw me error 
+		-Uncaught (in promise) DOMException
+		- Failed to execute 'texImage2D' on 'WebGL2RenderingContext': Tainted canvases may not be loaded.
+		- Setting the coss-origgin option to true?
+	- What have I found just searching for the bug?
+		- What is cross origin?
+			- If you are using the url to put imge. But if the site its self got it from other site. If you do crossorigin the browser is able to follow up and  get the image from the orgiinal location 
+	- What is a promise?
+		 - Its bascailly a function that may runs other functions (callback)
+		 - Promise: A functions split into 2
+		 	- Logic when requsting for data (Promise)
+		 	- Logic after the data is recieved (call back)
+		 	(WRONG)
+		 	- Promise is like the arrow: Telling i
+		 	- Logic when data has arrived or arrow has reached.  .then()
+		 	(Above is a simplified view)
+		 	- A promise object can have muiltiple arrows BUT OF 2 TYPES going down
+		 		- Reject
+		 			- Send bad data
+		 		- Resolve 
+		 			- Send good data
+		 		- The creator of a promise is the one who makes the promises block
+		 			- He fills the logic for requesting the data
+		 			- Whether to send this data to reject line or reslove line 
+		 	 - To catch data coming from resolve line .then()
+		 	 - To catch data coming from reject line .catch()
+		 	 - You can catch lines from multiple promise blocks
+		 	 		- Promise.all(p1,p2..).then()
+		 	 			- Wait for all the lines from different promise to come through
+		 	 		- Promise.race(p1,p1..).then()
+		 	 			- Just uses the data from the fastest line
+	- What is the idea of chaining promises?
+		- As soon the arrow hits the logic box, you start a new arrow.
+	- Why are promises good?
+		- It good/used when somthing/data take a long time to arrive. 
+		- The big idea is:
+			- you can do other logic 
+			- (The guy named)promise will handle the things when data has arrived 
+
+
+
+Studying others code:
+    - is something that is passed in resovle == img in .then(img)? : Yes
+    - When reader.readAsDataURL(imageFile); is removed, promise is not rejected nor accepted.
+    - Reader object is not for displaying, then what is it for?
+        - onces file is uploaded using input tag
+        - It helps to read the file data?
+   - Can I abstact away the JS code? (DONE)
+TASK TO DO:
+- Can I send an image from flask to JS
+- CAN I perform pose estimation on the reeieved image
+- Can I send back the pose to python
+
+- After looking at what is being passed to estimator, I might not even need the canvas etc.
+    - Look at tensorflow API for what is that its looking for?
+
+DEBUG:
+    -Give me the following error:
+        - Access to XMLHttpRequest at 'file:///getImage' from origin 'null' has been blocked by CORS policy: Cross origin requests are only supported for protocol schemes: http, data, chrome, chrome-extension, https.
+        - You can not open html file from chrome and expect it to run js and communicate to flask
+            - In simple terms: If you open file then it ajax request will be to the file
+        - You have to host the html file from the server, for it to make ajax request to the server
+DEBUG
+    -Gives me the following error:
+        -Uncaught SyntaxError: Unexpected token ' in JSON at position 1
+        - TURNS OUT JSON DOES NOT ACCPECT SINGLE QUOTE
+                - try replacing on the sever side?
+                -try replacing on the client side?
+        - Trying sending an image back in json
+            -https://stackoverflow.com/questions/8637153/how-to-return-images-in-flask-response
+            - Javascript recieves the image as binary
+                -Because the dataType supported by ajax are  xml, html, script and json.
+                -https://stackoverflow.com/questions/40354638/ajax-to-get-image-from-remote-server
+                    - Gives back failed to load resources error
+            - How to get image response ajax
+            -I have been trying to go through all the search result 1 by 1
+                - this is taking alot of time
+    - Try sending the path of the file
+        - For each file
+I dont need flask, I need nodejs server
+
+I learnt you just that the original script was also making use of the same Base64 image.
+    - image url recieved from the resolved promise is basically the the Base64 image string
+    - I need to make an Image element
+        - Trying out npm image-pixels
+            - Need to learn await syntax
+                - async and await are extension of promises
+                       - Promises: A way to split code into 2 parts: Part A which can run smoothly  and Part B which needs to waits hence need to wait
+                       - Completing 1 promises after another: Making sure any code that are partB dependent  run only after it has finished
+                            - await- if you want to use async make sure you use add async informt of the function
+                                    - await is a way to stack Part b and its dependent code sections
+    - I need to make an Canvas element
+    - I need to get the data of the cavas
+
+Ladder board:
+    - Create an new image
+           - Set the source to imageURL
+    - Create canvas
+        - Get context
+        - draw img
+    - Get imageData using tf.browser.fromPixels(canvas);
+    - Send it to for detection
+
+GOAL: Process a video and print out the key points
+    - Make a class that will deal wit frame and poseNet server
+        - Given a frame, gets the key points
+            - We dont want load resnet model every single we want proccess image
+            - We want to use the loaded model to do the detection for other frames
+                - We we get a request on "/loadModel" we load the model and store it in a variale
+                - If the model is not loaded: throw an exception
+                - The
+
+
+
