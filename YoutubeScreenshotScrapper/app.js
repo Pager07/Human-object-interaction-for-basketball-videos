@@ -5,13 +5,17 @@ const port = process.env.PORT || 8080
 const validUrl = require('valid-url')
 const bodyParser = require('body-parser');
 
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json({limit: '10mb', extended: true}))
+app.use(bodyParser.urlencoded({limit: '10mb', extended: true}))
+process.setMaxListeners(Infinity); // <== Important line
+
 
 let page = null;
 let browser = null;
 const username = 'sunthapa1@hotmail.com';
 const password = 'Pager07isgreat';
-let linksArr = null; 
+var linksArr = null; 
+var labelsArr = null; 
 
 const login =  async () => {
   browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] })
@@ -31,14 +35,14 @@ const login =  async () => {
   await navigationPromise
   await page.waitForSelector('input[type="email"]')
   await page.type('input[type="email"]', username)
-  console.log("Now pressing Enter")
+  //console.log("Now pressing Enter")
   await page.keyboard.press("Enter");
-  console.log("Pressed Enter!")
+  //console.log("Pressed Enter!")
   //await page.click('#identifierNext')
-  console.log("Entering Password")
+  //console.log("Entering Password")
   await page.waitForSelector('input[type="password"]', { visible: true })
   await page.type('input[type="password"]',password)
-  console.log("Password entered!")
+ //console.log("Password entered!")
   await page.waitForSelector('#passwordNext', { visible: true })
   await page.click('#passwordNext')
 
@@ -49,7 +53,7 @@ const login =  async () => {
   await page.click('#identity-prompt-confirm-button')
 
   await navigationPromise;
-  console.log("Logged Into Youtube.com")
+ // console.log("Logged Into Youtube.com")
 
   
 }
@@ -68,8 +72,15 @@ var parseUrl = function(url) {
 app.post('/postLinks' , async function(req,res){
    let linkString = req.body.links
    linksArr = linkString.split(',')
-   console.log(linksArr);
+   linksArr.pop()
+   //console.log(linksArr);
    res.send('200')
+})
+app.post('/postLabels' , function(req,res){
+  let labelString = req.body.labels;
+  labelsArr = labelString.split('/');
+  labelsArr.pop();
+  res.send('200')
 })
 
 app.get('/downloadImages', async function(req, res) {
@@ -78,58 +89,58 @@ app.get('/downloadImages', async function(req, res) {
   //   return
   // }
 
-  var proccessALink = async (link,nameLabel)=>{
+  const proccessALink = async(link, label) => {
+    //set download path 
+    const downloadPath = 'data/val/' + label;
     //parse the url
-    var urlToScreenshot = parseUrl(link)
+    const urlToScreenshot = parseUrl(link)
     //Give a URL it will take a screen shot 
     if (validUrl.isWebUri(urlToScreenshot)) {
       // console.log('Screenshotting: ' + urlToScreenshot + '&t=' + req.query.t)
-      console.log('Screenshotting: ' + link)
-      ;(async () => {
+      console.log('Screenshotting: ' + link);
+      //Logic to login to youtube below
+      //await login();
+      //go to the url and wait till all the content is loaded.
+      await page.goto(link, {
+        waitUntil: 'networkidle'
+        //waitUntil: 'domcontentloaded'
+      })
+      //await page.waitForNavigation();
 
-        //Logic to login to youtube below
-        //await login();
+      //Find the video player in the page 
+      const video = await page.$('.html5-video-player')
+      await page.content();
 
-        //go to the url and wait till all the content is loaded.
-        await page.goto(link, {
-          waitUntil: 'networkidle'
-        })
-        //Find the video player in the page 
-        const video = await page.$('.html5-video-player')
-
-        //Run some command on consoleDev 
-        await page.evaluate(() => {
-          // Hide youtube player controls.
-          let dom = document.querySelector('.ytp-chrome-bottom')
+      //Run some command on consoleDev 
+      await page.evaluate(() => {
+        // Hide youtube player controls.
+        let dom = document.querySelector('.ytp-chrome-bottom')
+        if (dom != null) {
           dom.style.display = 'none'
-        })
-        
-        await video.screenshot({path: 'data/sreenshot'+nameLabel+'.png'});
-        // await video.screenshot().then(function(buffer) {
-        //     res.setHeader(
-        //       'Content-Disposition',
-        //       'attachment;filename="' + urlToScreenshot + '.png"'
-        //     )
-        //     res.setHeader('Content-Type', 'image/png')
-        //     res.setHeader('Access-Control-Allow-Origin', '*')
-        //     res.send(buffer);
-        //   })
-        
+        }
+      })
 
-        //await browser.close()
-      })()
+      await video.screenshot({
+        path: downloadPath
+      });
     } else {
       res.send('Invalid url: ' + urlToScreenshot)
     }
 
   }
   await login();
-  linksArr.forEach(async (link)=>{
-    await proccessALink(link,'1,2');
-  });
+  for(let i = 0; i<labelsArr.length; i++){
+    let link = linksArr[i];
+    let label = labelsArr[i];
+    await proccessALink(link, label)
+  }
+ 
+
 res.send('200')
 })
 
 app.listen(port, function() {
   console.log('App listening on port ' + port)
 })
+
+
