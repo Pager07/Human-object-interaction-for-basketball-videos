@@ -1,3 +1,13 @@
+Proejct Goals:
+    - Ball detection (DONE)
+    - Action Classification 
+    - Player Detection
+    - Start on team seperation 
+
+May Experiment with these in future:
+- https://towardsdatascience.com/detecting-soccer-palyers-and-ball-retinantet-2ab5f997ab2
+
+
 Project 
     - What other methods are avialable to detect ball??
         - Resenet50 CNN regression?
@@ -57,6 +67,146 @@ Creating Basketball DataSet
                 - PROCCESS EACH LINK 
                 - SEND THE IMAGE
                 - REAPEAT UNTIL ALL THE LINKS HAVE BEEN PPROCCESSD!
+
+
+Training Images I am not sure about
+    - 164,31.png
+        - I can get the path of an Image
+            - data.train_ds.x.items[idx]
+        - How to gwt the idx?
+        - Lets try to learn anyyway, 
+            - Itf the result is really bad, we will go and fix the lable using opencv 
+
+Task 
+ - Train the model in larger images size(Done)
+    - Acutal data size: 490x360(Done)
+    - Can I get any sort of x and y coords form the fast ai
+        - Maybe look up how image.show(y=ImagePoints), takes imagespoints and finds the x y coord to find the dor
+            - Imagepoints: Potential target to be superposed on the same graph (mask, bounding box, points) 
+                - So its like a sketch paper on top of an image, its is the same size as the image
+                    - So may be find what coord holds the red dot in the image points?
+                        - Inside image points, Coords are scaled to range (-1,1), iff SCALE== true
+                            - Find out how it scales the coords and reserve it by tracking what happens SCALE==TRUE?
+                                - scale_flow() function gets ran
+                                    -https://github.com/fastai/fastai/blob/master/fastai/vision/image.py#L251 LINE:440 (NEXT)
+                                    - to_unit = True when scale_flow is true
+                                        - flow.flow = flow.flow/s-1
+                                            - I guess flow.flow are the coordinates
+                                             - s = flow.size[0]/2 , flow.size[1]/2
+                                             - What does the flow size look like relative to the image? Is it shape of the image?
+                                                - imagePoints.size return flows size, which are (360,490)
+                                                - s seems to be the center coord of the image
+
+- Run fastai in my pc (DONE)
+    -https://medium.com/@plape/how-to-install-fastai-on-mac-a05496670926
+
+
+- Mapping the coords given by the model for image size (490,360) to orginial image coord (DONE)
+    - https://stackoverflow.com/questions/25684327/how-to-find-an-equivalent-point-in-a-scaled-down-image
+    - Draw a cricle around the original image
+        - coordGiven: y,x
+        - originalImage: x',y'
+            - Find scaleFactor: sizex'/sizex..
+                - NOTE: opencv: (width, height)
+        - NewCood: x *  scaleFactor
+    -NEXT: COMPLETE THIS!
+
+
+
+The cricle is not drawn in the right part oof the image
+    - Even when I cchange the center, the cricle is not chaingein it place
+    - The originalCoord is wrong
+    - Check if the given unscaledCoord is correct
+        - Try drawing a circle in a random image
+        - Its wrong: Becuase I forgot to divide s coord by /2
+
+
+I getting Confused with W and H 
+    - image.size = (360,490) = (H,W)
+    - image.data = [-0.46 , -0.25] = (H,W)
+    OPENCV
+    - img.shape = [360,490]  = (H,W)
+    - cv2.resize(img , (490,360)) = (W,H)
+    - cv2.cricle(img, (490,360)) = (W,H)
+
+I have an array of image -> FastAi Image Object (NEXT)
+
+Detection on a video
+    - Pause 
+
+Progees: 
+    - I can take. picture and do regression on the image to the location of the ball
+NEXT: 
+    - However, the predictions of the ball is not quite accurate
+    - I will try fixiing the labels 
+    - Train it with more images?
+
+Ball detection
+--------
+Action Classification
+- Classification model
+    - I will trey this 1st
+- Posenet
+    - The idea is to get latent features from pose net and do action detection 
+
+Classification model
+    - I need to make a dataset
+        - I need labels, look at the csv file
+            - The second last column has the classes
+                - 3-pointer success, 3-pointer failure, free-throw success, free-throw failure, layup success, layup failure, other 2-pointer success, other 2-pointer failure, slam dunk success, slam dunk failure or steal success   
+    - The video links are going to be same but the label links has to change
+        - Check how I get ball possition 
+        - I can just access it using row['actionSuccess']
+         - if I just name them with the classname, the image file is going to replace each other
+            - need some kind of unique
+                - index_actionClass.png: 1_shoot.png
+                     - The index is relative to the main big table not the cut out training and val table
+                        - Downloading training images into: /Volumes/My Passport/FinalYearProjectData/ActionClassification/train
+                        - Got an error in server when downloading for this link https://www.youtube.com/watch?v=cr3caxj-4E4&t=46m17s
+
+-------------
+
+
+
+Detecting Teams
+    - What does mask of specific colours mean?
+        - Masking means: 
+            - Cutting  out only the portion of image that you need and placing it an empty black image template
+            - Hence, the resulting image will be same as the image, in a black background
+            - Just like Masking in Final Cut Pro
+    - Does detecting teams depend on detecting player first?
+        -  we extracted bounding box from tensorflow object detection 
+        -  count the percent of pixels in that bounding box that are non black to decide the team for that player.
+
+
+---------
+ Player Detection
+    - What is the best model to do player detection?
+        - Measurement they use is mAP
+            - Naming Convention
+                - Negatives
+                    -  Wrong Y 
+                - Positives
+                    - Acutal Y
+                - True
+                    - Correctly Classifying
+                    - Arrow is going the correct direction
+                - Flase
+                    - Incorrectly Classfying
+                    - Arrow is going the wrong direction
+            - precision 
+                - how accurate is your predictions
+            - recall
+                - how good you find all the positives.
+            - IOU
+
+
+
+
+
+
+
+
                 
             
         

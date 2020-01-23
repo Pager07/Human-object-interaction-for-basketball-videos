@@ -91,7 +91,7 @@ app.get('/downloadImages', async function(req, res) {
 
   const proccessALink = async(link, label) => {
     //set download path 
-    const downloadPath = 'data/val/' + label;
+    const downloadPath = '/Volumes/My Passport/FinalYearProjectData/ActionClassification/val/' + label;
     //parse the url
     const urlToScreenshot = parseUrl(link)
     //Give a URL it will take a screen shot 
@@ -129,12 +129,19 @@ app.get('/downloadImages', async function(req, res) {
 
   }
   await login();
+  var continueDownload = true;
   for(let i = 0; i<labelsArr.length; i++){
     let link = linksArr[i];
-    let label = labelsArr[i];
-    await proccessALink(link, label)
+    // if(link == 'https://www.youtube.com/watch?v=pxwnayuJtGY&t=40m19s'){
+    //   continueDownload = true;
+    //   console.log("Starting to download")
+    // }
+    if(continueDownload){
+      let label = labelsArr[i];
+      await proccessALink(link, label)
+    }
   }
- 
+ console.log("Complete!")
 
 res.send('200')
 })

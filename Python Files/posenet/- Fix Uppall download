@@ -1,0 +1,103 @@
+- Fix Uppall download
+- Go through uppall tutorail on youtube
+	-https://www.youtube.com/watch?v=0ioBpqDGOf0&t=190s(DONE)
+	- https://www.youtube.com/watch?v=9aCyigaQ_W0&t=1468s
+	- Simulator:
+		- No such file or direc
+		- Fixed: Downlaoded MAC ONLY UPPAAL
+-----------------------
+Learning For Tutorial 1
+- To controlwhen to take a transition (to “fire” it), it is possible to have a guard and a synchronization.
+
+- Channels/functions
+	- declare:?
+	- called:!
+	- Once the function gets called, you have other set of function that can be called
+		- Every new state: new set of functions
+			- example of enabled transition/function?
+				-continue_on_street: carOne -> lLane
+				- functionNmae : object1 -> object2
+	- The synchronization mechanism inUppaalis a hand-shaking synchronization
+		- Two process take a transition at the same time,
+			- one will have a! and the other a?
+
+- Gurads 
+	- Are like if statements for the transition
+	-A guard is a condition on the variables 
+
+Updating
+	- When taking a transition, two actions are possible: assignment of variables or reset of clocks.
+-------------------
+Learing from tutorial 2 
+	- Mutal exculsion: 1 recource dont get excessed by 2 entity same time
+	- Graud
+		- Condition to meet if you decide to take the transition 
+	- Invarient 
+		- Forces you to the take transtion and exit the state
+		- So: a state with invarient x<=3,
+			- x<=3 must be ture, if you want to stay in the state 
+	- Commited state
+		- Its say if we get inside this state we must get out of it immediatly 
+		- Just like: Invarrient
+		- Its like a branching if statement
+		- Its also comes when you want to an action immediatly, but under some condition. 
+	Tricks
+		- Making a boundary condition
+			- Range of time(clock), where its okay to stay in the same state
+				- Use invarient to force you out of a state (define the max)
+					- Maximum wait before you take the transition
+				- Use guard (define the minimum bound/condition)
+					- Minimum wait before you take the transition
+			- A clock 
+				- Reseting the clock every time we enter a state and checking is clock has gone over some number
+				- work.busy imply (work.waiting and z <12)
+			- Using clock with a bool
+				- Before entering a state: start the clock from 0, set enter = True 
+				- Exiting the state: set the enter = False 
+		- Propogating a signal
+			- Set the next state as commited
+			- So it you get kicked out immediatly as you get a chance to send a message for free
+
+	- Update 
+		- turn:=(me==1?2:1)
+			- if me is true then 2 else 1
+	- Parameter
+		- const int[1,2] me , int[0,1] &req_self, int[0,1] &req_other
+		- & can take input
+	- Query
+		- A: All Path , EL Exist a path
+		- []: Always , <>: Eventually 
+		- Example: 
+			- A[] not(P1.CS and P2.CS)
+			- P1.CS: P1 is not in state CS
+			- A[]Obs.taken imply x>=2 
+				- Bascally: Obs.taken -> x>=2 , if Obs.taken is ture , then x>=2 true aswell?
+	- The transitions that can happen is highlighted in RED
+	- Through channels and syn 2 Objects are communicate with each other
+		- So like calling reset! in P1 made Obs go to take state
+	- A component can be represented by a template, can communicate using channels and synchronization
+------------------------
+Main Memory
+	- 2 Simple process system consisting of CPU core and main memory
+	- The cpu core should make 
+		- Read and Write to 
+			-random main memeory locations? 
+			- to random locations?
+	- Adress buss?
+	- Request time?
+
+
+
+-----
+Lectures
+	- Video 7
+		- Von Neumann Machine 
+			- Connecting input and output devices 
+			-Stored program concept 
+				- Memory holds the program
+		- Building Instruction Memory
+			- Adress bus
+	- Video 8
+		- Building CPU 
+		- How instructuions are processed
+
