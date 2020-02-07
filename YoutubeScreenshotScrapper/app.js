@@ -91,7 +91,8 @@ app.get('/downloadImages', async function(req, res) {
 
   const proccessALink = async(link, label) => {
     //set download path 
-    const downloadPath = '/Volumes/My Passport/FinalYearProjectData/ActionClassification/val/' + label;
+    // const downloadPath = '/Volumes/My Passport/FinalYearProjectData/ActionClassification/val/' + label;
+    const downloadPath = '/Volumes/My Passport/FinalYearProjectData/Basketball/val/slam dunk/'+label
     //parse the url
     const urlToScreenshot = parseUrl(link)
     //Give a URL it will take a screen shot 
@@ -103,11 +104,11 @@ app.get('/downloadImages', async function(req, res) {
       //go to the url and wait till all the content is loaded.
       await page.goto(link, {
         waitUntil: 'networkidle'
-        //waitUntil: 'domcontentloaded'
       })
       //await page.waitForNavigation();
 
       //Find the video player in the page 
+      await page.keyboard.press(" ");
       const video = await page.$('.html5-video-player')
       await page.content();
 
@@ -119,7 +120,7 @@ app.get('/downloadImages', async function(req, res) {
           dom.style.display = 'none'
         }
       })
-
+      await page.waitFor(1000)
       await video.screenshot({
         path: downloadPath
       });
@@ -132,7 +133,7 @@ app.get('/downloadImages', async function(req, res) {
   var continueDownload = true;
   for(let i = 0; i<labelsArr.length; i++){
     let link = linksArr[i];
-    // if(link == 'https://www.youtube.com/watch?v=pxwnayuJtGY&t=40m19s'){
+    // if(link == 'https://www.youtube.com/watch?v=npFnx3kqFl4&t=52m56s'){
     //   continueDownload = true;
     //   console.log("Starting to download")
     // }

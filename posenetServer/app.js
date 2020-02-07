@@ -4,13 +4,13 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var pixels = require('image-pixels');
 
+
 const {
     createCanvas, Image
 } = require('canvas')
 
 var app = express();
-
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({limit: '10mb', extended: true}))
 
 app.get('/getImage',function(req,res){
     var data = JSON.stringify({name:'Sandeep'});
@@ -18,12 +18,16 @@ app.get('/getImage',function(req,res){
 })
 
 app.get('/loadModel', async function(req,res){
+    console.log("Loading model");
     net = await posenet.load({
         architecture: 'ResNet50',
         outputStride: 32,
-        inputResolution: { width: 257, height: 200 },
-        quantBytes: 2
+        inputResolution: { width: 800, height: 600 },
+        quantBytes: 2,
+        multiplier:1
         });
+    console.log("Model Loaded!");
+    res.send("Model Loaded");
     
 })
 
@@ -51,7 +55,20 @@ const getPoseDetection = async(imageUrl) => {
     const imageScaleFactor = 0.5;
     const flipHorizontal = false;
     const outputStride = 16;
-    const pose = await net.estimateSinglePose(input, imageScaleFactor, flipHorizontal, outputStride);
+    //const pose = await net.estimateMultiplePoses(input, imageScaleFactor, flipHorizontal, outputStride);
+    // const pose = await net.estimateMultiplePoses(input, {
+    //     flipHorizontal: false,
+    //     maxDetections: 5,
+    //     scoreThreshold: 0.5,
+    //     nmsRadius: 30,
+    //     });
+    const pose = await net.estimateMultiplePoses(input, {
+        flipHorizontal: false,
+        maxDetections: 10,
+        minPoseConfidence: 0.15,
+        minPartConfidence:0.1,
+        nmsRadius: 30,
+        });
     // for(const keypoint of pose.keypoints) {
     //     console.log(`${keypoint.part}: (${keypoint.position.x},${keypoint.position.y})`);
     // }

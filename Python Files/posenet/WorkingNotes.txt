@@ -1,7 +1,11 @@
 Proejct Goals:
     - Ball detection (DONE)
-    - Action Classification 
-    - Player Detection
+        - Find out why the predictions so shit?
+        - Does it differ If I create my own dataset?
+    - Action Classification (DONE)
+        - Find out why the prediction are so shit?
+        -Does it differ If I create my own dataset?
+    - Player Detection 
     - Start on team seperation 
 
 May Experiment with these in future:
@@ -153,7 +157,44 @@ Classification model
     - I need to make a dataset
         - I need labels, look at the csv file
             - The second last column has the classes
-                - 3-pointer success, 3-pointer failure, free-throw success, free-throw failure, layup success, layup failure, other 2-pointer success, other 2-pointer failure, slam dunk success, slam dunk failure or steal success   
+                - 3-pointer success(DONE) (CHECKED)(CHECKED)
+                    - train:348(need more)(880)
+                    - val: (DONE)
+                -3-pointer failure, (DONE)(CHECKED)(CHECKED)
+                    - train:701
+                    - val: (DONE)
+
+
+
+
+
+                -free-throw success,(DONE)(CHECKED)(CHECKED)
+                    - train:221 (NEED MORE)(542)
+                    - val: (DONE)
+                - free-throw failure, (DONE)(CHECKED)(CHECKED)
+                    - train:135 (NEED MORE)(339 total)
+                    - val: (DONE)
+
+
+                - layup success, (DONE) (CHECKED) (CHECKED)
+                    - train: 408 (NEED MORE)(1189 total)
+                    - val:(DONE)
+                - layup failure,(DONE)(CHECKED)(CHECKEd)
+                    - train: 517
+                    - val:(DONE)
+                - other 2-pointer success, (DONE)(CHECKED)(CHECKEd)
+                    - train:409 (NEED MORE)(1017 total)
+                    - val: (DONE)
+                - other 2-pointer failure, (DONE)(CHECKED) (CHECKED)
+                    - train:726 (DONE)
+                    - val: (DONE)
+                - slam dunk success: (DONE) (CHECKED)(CHECKED)(might need a bit more valid more on validation set)
+                    - train:108 (NEED MORE) (279)total
+                    - val: (DONE)
+                - slam dunk failure: (DONE)
+                    -train: 18 (NEED MORE)(46 total)
+
+                - steal success   
     - The video links are going to be same but the label links has to change
         - Check how I get ball possition 
         - I can just access it using row['actionSuccess']
@@ -163,9 +204,83 @@ Classification model
                      - The index is relative to the main big table not the cut out training and val table
                         - Downloading training images into: /Volumes/My Passport/FinalYearProjectData/ActionClassification/train
                         - Got an error in server when downloading for this link https://www.youtube.com/watch?v=cr3caxj-4E4&t=46m17s
+They way I downloaded the dataset is not helpful
+    - I need to be able to see how many image each classes have 
+    - I need to download 100 more image extra just incase I remove due to falulty images
 
+Reorganise the data in a good format
+    - Take a look I orginsed the data for other classification 
+        - Inside the data folder
+            - I have classes folder (DONE)
+
+TODO:
+    - I will concatonate slam dunk success and failure class
+    - There are alot of flase labels
+    - There are 2 options
+        - Download the data set for each class 1 by 1 agian 
+        - Download only from the point of last image 
+            - Make a new dataframe from oldlocation to new loaction 
+                - Download thoes images
+                -example: train_links_df[train_links_df['actionSuccess'] == 'slam dunk success'].loc[8852:]
+        - can I fix timing issue?
+            - what is causing the timing error?
+                - I am lookin at 5 dummy links for time lag
+                    - first image, timing is correct, its taken at the end of the second 
+                    - second image, timing is wrong, given:40 and but taken at 42 (2 second later)
+                    - third image, timingi is wrong, given:6 but taken at early 8 (2 second later)
+                    - fourth image, timing is wrong, given:7 ubt takeb at early 8 (1 seond later )
+                    - fifth imag, timing is wrong, given 46 take at 48 (1 second later)
+                - Its seems that for a most links it is taken after 2 seconds
+                - Is there a to get more specific timings?
+                    - Try: pausing the video?
+                        - pausing the video gets better results, 
+                        - next: I might have to wait a bit longer so that the pause mark goes away
+                    -Try: I am trying to if in get_time if I choose between option of round down or up
+                        -currently i have -1, which tell me I it is giveing me 1 second back
+                            - What happenns if I remove this 1 second, and give better rounded sec
+                                - just round: lead to bad reuslt
+                                - round - 1 : bad results
+                                - round - 2 : better results
+                                    - When was the actually take comppared to the orginiaail 
+                                        - Because we are using round, it is much closer to original time
+                                            - 54:53
+                                            - 42:41
+                                            - 8:7( 1 second delay is good because @8 player has already ladnded)
+
+                                - round - 3 : video has go to much backward in time 
+                        - Hence, I will just stick to round()-2
+
+                    - Each data is going propely labled with the following info
+                        - ballPos
+                        -idnex
+                        -name
+    - Cleaning up data from each class (DONE)
+        - Remove image that clearly should not be there
+    - Training the data 
+
+    - Some classes look very similar, what soloution is there?
+
+------------
+MERGing Classification model and regression model together for demo
+    - Dont forget to convert shit to rgb 
+        -test_img = cv2.cvtColor(test_img, cv2.COLOR_BGR2RGB)
+    Regression Model Class:
+        - getPrediction()
+        - drawPrediction()
+    Action classification
+        - getPrediction()
+    - Need to load the 2 notebooks
+    -Side note: Classes are in this order
+       - ['3-pointer failure',
+          '3-pointer success',
+          'free-throw failure',
+          'free-throw success',
+          'layup failure',
+          'layup success',
+          'other 2-pointer failure',
+          'other 2-pointer success',
+          'slam dunk']
 -------------
-
 
 
 Detecting Teams
@@ -177,6 +292,7 @@ Detecting Teams
     - Does detecting teams depend on detecting player first?
         -  we extracted bounding box from tensorflow object detection 
         -  count the percent of pixels in that bounding box that are non black to decide the team for that player.
+        - 
 
 
 ---------
@@ -195,20 +311,176 @@ Detecting Teams
                     - Incorrectly Classfying
                     - Arrow is going the wrong direction
             - precision 
-                - how accurate is your predictions
+                - if it does predict y as Y: how likely is it that its the top arrow (accurary of top arroow)
             - recall
-                - how good you find all the positives.
+                - probabilty that it find the (y=y) how good you find all the positives.
             - IOU
+-----------------------------
+REDO 
+
+Ball Regression and Action classification
+    - Create 1 dataset that serves both 
+        - Collect yourself 
+            - Downlaod images 
+                - 2 Points
+                - Layup 
+                - Dunk
+        - Search  
+            - Google?
+            - Github?
+
+Questions:
+    - What did the Yolo-Basketball detection dataset look like?
+-------
+Presentation:
+    - 10 minutes
+    - Title slide
+        - Project title, name, course, data 
+        - Outline
+    - Problem description 
+    - Motivation
+    - Approach
+    - What you have commplished so far(Not mars givens)
+    - Analyisis (how will you judge the outcome of your work)
+    -A conlusion slide (what did or will you accomplish)
+    - What still needs to be done?
+    -Clarity of explanation of the deliverables 
+    - How will the project be evaluated?
 
 
+Possibile themes 
+    - https://slidesgo.com/theme/data-waves
+    - https://slidesgo.com/theme/ai-tech-agency
+    -https://slidemodel.com/templates/basketball-court-game-plan-powerpoint-shapes/
 
 
+QUESTIONS?
+    - WHAT IS HOI?
+        -The Human-object interaction (HOI) detection is the task of localizing and inferring relationships between a human and an object.
+        -  For example, detecting the HOI “human-row-boat” refers to localizing a “human,” a “boat,” and predicting the interaction “row” for this human-object pair. 
+    - Why I choose HOI on basketball
+        Algorithmic advantages of doing HOI in basketball
+        - The number of objects in the object space is limited
+        - The action is some what related 
+
+SCRPIT
+    laaning an Preperation 
+    - Preminalry preperation: instead of for fun.
+    - Over the christmas break in my second year, I did my very first  deeping learning project every. More like a helloWorld project
+        - It was about cats vs dogs recognition    
+        - Here is me, telling every one in the world how I did the projct and just telling people the how happy on making a computer recognise cats and dogs
+            - I was expecting people to be like: oh it took you a week to do this piece of cake, it takes me 30 mins.
+            - But nope: responses that I received was very encouraging
+    - So with newly. gained confidence, I moved on and  did the same thing over different dataset over and over aigan with minor varitations,
+        - Some of the cool dataset that I got my hands dirty with is the minist and cats facial feature 
+        - Minist was cool becauuse It was a multi-classification problem meaning there were more than 2 classes to predict from.
+        - Cats facial feature prediction is fav ...
+            - It is a regression problem, it where you take an image and have the superpower to predict a continous value 
+            - The model was doing great.
+            - But I was like what happens, if I block of some of the features,forexample, if I remove the cats eye  will it still be able to predict where the eye is??
+                - So here are some results. When I saw this, I was like what NO WAY. It's so dope, its like if the the model is reallly good at throwing a dart with half blind. 
+    - So Why am I telling you all these? Its because, these are the preliminary project and experiements for my 3rd year project. And form the back of my main 3rd project. 
+
+    Motivation
+        - At this points, I am getting bored. Cause, all I am constally doing interperting an image via object bounding boxes and Nothing else.
+        - Wouldn't it sick though, if your model could understand what's going on in a image. Perhasp, extract semantic information out of the image.   
+        - You know after a basketball game, players have to sit hours of flim session to review the game with a tv remote controller. I mean remote controller. At this day an age you are tidously using a remote controller . Hold up I got something better for what if I give you a system where you type in layup and it retrieves you all the clips of you laying up. 
+        - Focusing creative engery 
+        - There are other advantages  camera planning, image captioning. 
+        - If solution is to exist, it can def improve enjoymnet of the sport. 
 
 
+    Problem Description
+    - So the umbrella term for my project is called Human-Object interaction recognition detection via Machine learning 
+        - I know it a mouthful but in laymans terms: All it means is just find where the human is, find where the object of interest is. And assing them a verb. Therefore, the goal is to represent it  human object interaction as a triplet (SLides eefect draw boiund boxes)
+        - This problem is hard because, you will have an exponentail expolsion here.
+        - So for this project, I am trying to slove HOI in the basketball domain. The size of the object and human space is relativley relaxed.
+        - The object space only contains 1 object and that is the ball
+        - Well for the human space, we dont have consider the spectators, cameramans , ref so The human space is shirnked down into only the players
+        - So that a thumbs up, as far as my time and  computational resources required
+            - Meaning less dataset required
+            - Lower model training time
+            - Which means , I have more time to improve and compare model with others and do alot of other experiments
+    - However, HOI with basketball has it own unqie set of challanges 
+        - I extermely hard to localise the basketball. 
+            - First, believe me when I say the ball appears really small and looks like an organe dot and just uses too few pixles. 
+            - Plus, when it moving, I not even a dot anymore,  so it appears blurred out. And if the player is moving with it too fast, it dissapears. 
+            - Sometime, it dissapears because it is occluded by players
+        - Player interact with object in various ways that look very similar. 
 
+    Apporach
+        - So How do we tackel this problem?
+        - So lets bring back the computer scientist mentality here: Lets break the problem down to smaller subproblem. And lets slove the subproblem. Which will inturn slove the main problem
+        - The sub problems are 
+            - Localizing  the player
+            - Localizing the ball
+            - Classifiing the verb
+        - Well
+            - Localizing  the player
+                - Its th reasy part. Use pre-trained  model like YOLO to detect humans and filter the detecting them using  computer vision teq like thresholding
+            - Localizing the ball
+                -  Lets use a regression model, to interpolate the spatail coords just like we did with cat facail featuers 
+            - Classifying the verb
+                - Well we can use multi-classification model just like we did with minsit. Where 1 action is a 1 class  
+    Deiliverabls
+        - So that when I have done all the stuff, I want to be able to take a video and analyze frames and report on what the player is doing with the ball
+        - And the I want to go the extra mile, detecting teams to produce action stats sheet for each team. So say like, Lakers only have taken  3 pointer, the def need to .
+    Evaluation
+        - Quantative Evaluation will include, evaluating confusion matrix 
+            - This is  the confusion matrix, of my model that classify verb. As you can see there 
+            - At this point there are alots of false postives and flase negatives
+                - between classes that look similar such as training  
+        - Then I will be evaluating its Percsion and Recall Scores
+            - to find out how accurate the prediction are and how often model detects a certain action
+        - Becuase percsion and recall are both inportant, I will be evaluting the models  F1 score as well.  
 
-                
             
-        
+---------
+New ideas:
+    - Time Compression
+        - Assumes that the camera is stationary?
+        -  That would certainly create multiple, and cumulative instances of the same subject on the same frame. 
+            -Since I cannot turn on and off the sun, I am going to use a light source that can be controlled in that fashion: Canon Speedlites will offer that capability very nicely.
+            - Exposure data is 0.5 sec at f-8. During that half-second exposure, the flash that was mounted on the hot shoe of the camera, a Canon G9, fired multiple times to register the number of images you see here.
+    - What happens if I add mutliples frames in to 1
+        - Experiment:
+            - Combining All the frames in the clip
+                - mergedImage = w * oldImage  + w2 * newImage
+                    - Increasing w2 brigthens up 
+How to draw key points?(Complete)
+    - https://github.com/luxifeo/posenet-python/blob/master/posenet/utils.py
+    - uses 
+        -out_img = cv2.drawKeypoints(img, cv_keypoints, outImage=np.array([]))
+        - what is cv_key_points? (DONE)
+            - Its is list of something
+                - something: cv2.keyPoints object
+                    -cv2.KeyPoint(kc[1], kc[0], 10. * ks)
+                -What is kc[1] and kc[0]?
+                    -kc = key_coords.
+                    -x= kc[0] and y=kc[1] or the reverse
+                - Note: Every point comes with
+                    - (score, part, position)
+                - what is ii?
+                    - index of score
+                - what is ks?
+            - This function seems to give out empty image, Who calls this function? Do they fill it up latee
+How do I draw skeleton? (DONE)
+    - What does, get_adjacent_keypoints(keypoint_scores[ii, :], keypoint_coords[ii, :, :], min_part_confidence) do?
+        - What is posenet.CONNECTED_PART_INDICES?
+            - imported from posnet.constants
+            - What is PART_IDS?
+                - {pn: pid for pid, pn in enumerate(PART_NAMES)}
+
+        - What is results?
+            - Its an array of array. [ [leftPart , rightPart],....otherpairs]
+            - pair = np.array([keypoint_coords[left][::-1], keypoint_coords[right][::-1]]).astype(np.int32)
+            - What does [::-1] do? Its reverses lefpart: (x,y ) -> (y,x)
+            - What is left and right? 
+                - Its an index of where of where left and right respective keypoint is  found
+        - For 1 pose/keypoint/{part:leftLeg} . it find the counter part rightLeg coord and return a [{x:,y:} , {x:,y}]
+        - What does  keypoint_coords[ii, :, :] do? 
+
+How do draw keypoints and skeleton? (Complete)
+
 
 
