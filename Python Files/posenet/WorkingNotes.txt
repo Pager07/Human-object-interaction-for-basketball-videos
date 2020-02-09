@@ -482,5 +482,40 @@ How do I draw skeleton? (DONE)
 
 How do draw keypoints and skeleton? (Complete)
 
+How to convert array of images to base64? (Complete)
+    - https://stackoverflow.com/questions/16065694/is-it-possible-to-create-encoded-base64-url-from-image-object
+    - https://stackoverflow.com/questions/40928205/python-opencv-image-to-byte-string-for-json-transfer (WORKED)
+Learn about heatmaps? (Complete)
+    - Read abit 
+Read about the mouse project?(Complete)
+    - Encode mouse movements, directions, speed and acceleration of mouse in a consistent way
+        - Allowed to encode trajactory lines
+- Produce an image containing all the poses off all the frames in an image (COMPLETE)
+    - On a black image (DONE)
+    - On a non black image(DONE) 
+        - 1 second --> 60 frame
+
+- Produce an image containg all the poses of all the frames in an image and color code it 
+    - How to map numberOfFrame with colour
+        - Learn the different colour spaces avialable?
+            - What is a colour space?
+                - three-dimensional object which contains all realizable color combinations.
+            - What are the different colour spaces avialable?
+                - HSV
+                    - (hue, saturation, brightness)
+                        - hue: which colour(expressed as a number from 0 to 360)
+                        - saturation: pruity of the choosen choosen colour (toward zero introduces more gray and produces a faded effect , less pure more gray)
+                        - value:  brightness or intensity
+    - Example of colou mapping
+        - learnopencv.com/applycolormap-for-pseudocoloring-in-opencv-c-python/
+            - What they are doing is mapping one colour to another colour
+                - turns it into an grayImage 
+                - uses applyColorMap() to map the image to anthoer color 
+            - NEXT:::What I want is map a frame count to another colour
+                - Then use this colour to draw the poses
+                - The problem: Mapping interger into RGB/HSV space?
+                    -  Does cv2.polylines accept 
+
+How to map an integer in range 0-60 to a color spectrum?
 
 
