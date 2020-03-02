@@ -1,0 +1,229 @@
+Advanced database
+
+Part A: section a 
+Lecture 2
+What is XML?
+What is directed tree structure?
+	- What is the hieratachial tree model?
+	-What does she mean by writing name of the nodes outside rather than inside?
+	- What does she men by star like display?
+
+Do I use paper?
+
+Part A: section b
+- WTF is DTD?
+- <!ELEMENT teacher (name, course+)>
+	-  I assumed that a teacher 
+Tried:
+	- XML editor but it is only for windows 
+	- W3school does not allow such functionallity
+
+Debug:
+	-The markup declarations contained or pointed to by the document type declaration must be well-formed.
+		- What is well-formed?
+			-A well-formed document in XML is a document that "adheres to the syntax rules
+				- Is it becasue I am ordering mistake?
+				-
+
+	<!ELEMENT teachers (teacher*) >
+	<!ELEMENT teacher (name, course+)>
+		<!ATTLIST teacher joiningDate (year) jobRole (Professor)>
+	<!ELEMENT year (#PCDATA)>
+	<!ELEMENT name (#PCDATA)>
+	<!ElEMENT course (name,submodule+)>
+		<!ELEMENT submodule (name, year+) >
+
+
+
+
+NEXT: Validate this DDT
+
+Part A: section c (DONE)
+
+PART B:
+For each query:
+	- Explain how you interpreted tthe query(natural language),+ Reson
+	- limitation
+	- Ouput
+
+	XPATH
+		- What is XPATH?
+		- How to write XPATH queries?
+Doing examples in of W3schoool:
+	- https://www.w3schools.com/xml/xml_xpath.asp
+		-Selects the first book element that is the child of the bookstore element
+			- /bookstore/book[1]
+		- Selects the last book element that is the child of the bookstore element
+			-/bookstore/book[last()]
+		- Selects the last but one book element that is the child of the bookstore element
+			- /bookstore/book[last()-1]
+		- Selects the first two book elements that are children of the bookstore element
+			- /bookstore/book[position()<3]
+		-Selects all the title elements that have an attribute named lang
+			- //X: find any node X (descendent), @: attribute
+				- Any includes:
+					- /: child
+					-
+			- //title[@lang]
+		-Selects all the title elements that have a "lang" attribute with a value of "en"
+			- //title[@lang='en']
+		- Selects all the book elements of the bookstore element that have a price element with a value greater than 35.00
+			- price is element 
+				- price is a child of book
+				- interesting is not something like: /bookstore/book/price[PCDATA>35]
+			- /bookstore/book[price>35]
+		- Selects all the title elements of the book elements of the bookstore element that have a price element with a value greater than 35.00
+			- /bookstore/book[price>35]/title
+Doing examples from lecture notes:			
+- Extra Notes:
+	- .../author[firstName]
+		- authoers: if author has firstname:
+- Find all books, which have price 55 and a firstName (at some depth) or a publisher “Freeman”
+	- /bib/book[@price = 55][//firstName || publisher = "Free man"]
+		- its like:
+			- if()
+			- if()
+	- swapping the 2 if statment will affect the result 
+- Get all the authors PCDATA
+	- /bib/book/author/text()
+-Tranlate: Reference node: All the decendent of bib(DOES it include bib?) , condition:[name of the elemeent has to be boook]
+	- /bib//*[name() = "book"]
+
+- Get the author that has firstName and LastName by position
+	- /bib/book/author[position() = 2]
+
+- Find all authors who have:
+	– a sub-element firstName and
+	– a sub-element address, which has:
+		- a zip code (as a descendant at some depth)
+		- and a city (as a child)
+ - and return the lastName of these authors
+- Its like saying: 
+	- if()
+	- if()
+		- if()
+		- if()
+- /bib/book/authors[firstName][address[//zip][city]]/lastName
+
+- Translate the following:
+	-/bib/book[@price <"60"]
+		- get book if they have attribute price less than 60
+	- /bib/book[author/@age < "25"]
+		- get book if they have author with an element with age attribute is less than 25
+		- get book if they have author who has age attribute is less  than 25
+	- /bib/book[author/text()="John"]
+		- get book if it has author with PCDATA John
+	-/bib/book[year>1996]/year
+		- get books if(year>1996) and return thier year
+-  “find the first book that has price 55”
+	- /bib/book[@price = 55][position() = 1 ]
+	- notice if you do:
+		- /bib/book[position() = 1 ][@price = 55]
+		- You are going to remove all the node that are not in position 1
+		- And the unremoved node is not price!= 55 then you are fked!
+		- IMAGINE: A SET OF BOOK WITH PRICE 55, you have to pick the one with lowest index
+	- OR: //book[@price = “55”][position()=1]
+	- OR: /descendant-or-slef::book[@price = “55”][position()=1]
+
+- find the first book, if it has price 55”
+	- Notice: The set to be consider only contains first book
+		- //book[position() = 1][@price = 55]
+
+Axis
+	- Child
+		- on the direct childern
+	-Preceeding 
+		- All the Left self 
+		- WTF why is there no keywords for all the right stuff
+	- Silibing 
+		- Following-Silibling
+			- After this node (right)
+			- The excludes their descendant 
+		- Preceding-Silibing
+			- Node before (left)
+Functions
+	- text(): PCDATA
+	- name(): returns tag name
+	- position: returns position of element from left to right....? 
+		- Number of nodes left to right
+
+
+
+PART B: XQUERY
+Examples on w3school:
+	- select all the title elements in the "books.xml" file
+		- doc("books.xml")/bookstore/book/title
+	-select all the book elements under the bookstore element that have a price element with a value that is less than 30
+		- doc("books.xml")/bookstore/book[price<30]
+	-select all the title elements under the book elements that are under the bookstore element that have a price element with a value that is higher than 30.
+		- doc("books.xml")/bookstore/book[price>30]/title
+		- OR: 
+			- for $x in doc("books.xml")/bookstore/book
+			- where $x/price>30
+			-return $x/title
+	-Sort the result obtain in the above question
+		-  for $x in doc(books.xml)/bookstore/book
+		- where $x/price>30
+		- order by $x/title ()
+		- return $x/title
+	
+	- Translate the following query?
+		- for $x in doc(books.xml)/bookstore/book
+		- return if ($x/@category="children")
+		- then <child>{data($x/title)}</child>
+		- else <adult>{data($x/title)}</adult>
+
+	-   if any q attributes have a value greater than 1
+		- $bookstore//book/@q > 10 
+		- // any == Descendant
+
+	- is there only one q attribute returned by the expression, and its value is 		greater han 10
+		- $bookstore//book/@q gt 10
+
+	-Translate the following:
+		- for $x at $i in doc("books.xml")/bookstore/book/tilte
+		- return <book>{$i}. {data$(x)}</book>
+		- Literally just the enmuerate function in python, that goes throuhg each item and return the item with index attached
+	- Translate the following:
+		- for $x in (10,20), $y in (100,200)
+		- return <test>x={$x} and y={$y}</test>
+		- in range functtion with 2 variables x and y 
+
+	- Generate the following: <test>1 2 3 4 5</test>
+		- let $x := (1 to 5)
+		-return <test>{$x}</test>
+		- Basically bind the variable x to multiple nodes
+
+
+NOTE:
+	- $x : notation for variable listOFnodes
+	- FLOWR
+		- For-loop over the list of nodes of last element
+			- ..bookstore/book
+			- makes/selects book is the list of nodes 
+		- where
+			- is like for-if over the list $x
+		- order by 
+			 - is a function orderby($x) which alters its location of items in the list
+		- Let
+			- Binds the variable to multiple nodes
+	- Nodes
+		- root node
+		- element node 
+		- attribute node 
+		- Atomic node 
+			 -PC data
+
+	- Comparotor 
+		- gt, eq..: if any
+		- > ,.....: if all
+
+	- Function
+		- upper-case
+		- count()
+			- returns the number of elements
+
+
+		
+
+

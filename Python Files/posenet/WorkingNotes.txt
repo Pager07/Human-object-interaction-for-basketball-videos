@@ -7,7 +7,10 @@ Proejct Goals:
         -Does it differ If I create my own dataset?
     - Player Detection 
     - Start on team seperation 
-
+    - Court and board Detection
+===================================================================================================================================================
+===================================================================================================================================================
+===================================================================================================================================================
 May Experiment with these in future:
 - https://towardsdatascience.com/detecting-soccer-palyers-and-ball-retinantet-2ab5f997ab2
 
@@ -495,7 +498,7 @@ Read about the mouse project?(Complete)
     - On a non black image(DONE) 
         - 1 second --> 60 frame
 
-- Produce an image containg all the poses of all the frames in an image and color code it 
+- Produce an image containg all the poses of all the frames in an image and color code it (Complete)
     - How to map numberOfFrame with colour
         - Learn the different colour spaces avialable?
             - What is a colour space?
@@ -516,6 +519,465 @@ Read about the mouse project?(Complete)
                 - The problem: Mapping interger into RGB/HSV space?
                     -  Does cv2.polylines accept 
 
-How to map an integer in range 0-60 to a color spectrum?
+How to map an integer in range 0-60 to a color spectrum?  (Complete)
+    - Steps
+        - Get the perctange value (Normalize)
+         - Then the number is mapped to a color using a subclass of colormap
+            - LinearSCM
+            - ListedColorMap
+    - Tutorial:
+        - https://matplotlib.org/tutorials/colors/colormap-manipulation.html
+    - Returns RBGA 
+        - what does cv2.polylines and drawKeyPoints accept?
+            - RGB or BRG
+            - Do they accept fractions?
+                - BRG
+                - Does not accept fractions has to be in the range 0-255
+Debug
+    - It is only using yellow color
+        - (90, 7, 7) then (37, 231, 231) and the last color is just repeated
+    - mapINTocoolours is geting negative numbers (totalColors)
+        - totalFrames is beign pass as totalColours
+            -Why is totalNumberFrames so big?
+                - -230353946974395
+                - videoPath: ._Free-throw39.mov
+
+Try to play around with only darwing fewr frame and see if that make a differet (COMPLETE)
+    - There are 58 frames => 2 seconds 
+    - 29 frames => 1 second
+    - Tried:
+        - Every 10 frames (Time need)
+        - Every 5 frames (Time)
+        - Every 2 frames (Time) 
+ - Collect dataset (COMPLETE)
+    50%-30% split
+    50 Train 
+    15 Valid
+    - Test classes:
+        - 3-Pointer (DONE)
+        - Free-throw 
+        - Layup
+    -Download the videos 
+        - There are 2 way
+            - I can 1 long video with many 2 seconds 3-pointers video
+                - May have problems
+            - I can make 3-pointer video clips direclty
+                - Try this
+            - Linked Used
+                -Free-throw
+                    - https://www.youtube.com/watch?v=7tW3oYk43yg
+                    - https://www.youtube.com/watch?v=qawlTEmBEns
+                        -NBA Airball Free Throws Compilation
+
+- Next:Train the on new images 
+- Can I label the hand differnt color?
+- I notice there are some consistency in the basketball court 
+    - The drawing on the ground is always the same
+    - The inner box has one dominiant color
+    - There is always the stateframe writing in the rim
+- May be I can uses statiatical patterns of feature poins to recognise categgories of objects?
+    - May be I can do feature points macting 
+        - Do SIFT Feature Matching
+            - Given a feature in l1 (STATE FRAME),how to find the best match in l2?
+                - I am gonna go make some notes on SIFT Feature Matching now
+
+What does surf dectection.py contain?
+    - line 234 has drawKeyPoints
+        - At this stage we must have done the processing already
+        - feature_object.detectAndCompute()
+            - What is feature_object?(DONE)
+                - it is created by
+                    -  cv2.xfeatures2d.SIFT_create(400) or by 
+                        - 400 is the hessiabThreshold
+                        - Wtf is hessian threshold?
+                    - cv2.ORB_create(800)
+                - It is an Feature2D object class, that extracts features
+                - What does .detectAndCompute()
+                    - takes image/crop and mask
+                        - What is crop?
+                            - basically the region with feature that you want to detect
+                    - returns keypoints_cropped_region and descriptors_cropped_region
+                        - I understand what keypoints are
+                            - It tell you  where the feature is located at
+                        - What is a decriptors_cropped_region?
+                            - decriptors are the actually feature values
+    - Thee feature mapping is happening in Feature Matches window
+        - Maybe I should look there?
+        - it is using cv2.drawMatches(crop,keypoints_cropped_region,frame,keypoints,good_matches,None,**draw_params)
+            - crop(objectImage) , keypoints_cropped_region(featurePoints in the main object image)
+            - frame(current Frame), keyspoints (I think it find feature points just like crop and set this var)
+            - good_match(matches1to2)
+                -DMatch object: Object for matching keypoints
+        - Is keypoints gernerated how I think it is? 
+            - Yes: a gray_frame is passed
+        - How is good_matches created? (DONE)
+            - it is a list of tuples (m(features/descriptors in objectImage) , n (features/descriptors in training image)):
+                - we are filtering tuples(m,n) in matches list 
+                    - based on: m.distance < 0.7*n.distance
+                - How is matches list created?
+                    - matcher.knnMatch(descriptors_cropped_region, trainDescriptors = descriptors, k = 2)
+                        - Returns you (m,n) which are matching features (matchobject)
+                    - What is a matcher?(DONE)
+                        - is returned from cv2.FlannBasedMatcher(index_params,search_params) or cv2.BFMatcher()(Brute Force Matcher) depending on cv2 version
+                            - The returned object is a DescriptorMatcher class
+                            - (Class for matching keypoints descriptors)
+
+                        -  The frist one only works for OpenCv > 3.1
+                            - We have 3.4.5! We can good to go!
+                        - WTF is index_params and search_params?
+                            -  index_params: 
+                                - KDTREEPARAM in the form of dictionary: 
+                                    -dict(algorithm = FLANN_INDEX_KDTREE, trees = 1)
+                            - search_param
+                                - Number of searches maybe?
+                                    - another dict:  dict(checks=50)
+                    - Finally matches between the 2 features Steps
+                        - matcher.knnMatch(descriptors_cropped_region, trainDescriptors = descriptors, k = 2) 
+                            - trainDescriptors = descriptors: is the descriptors/features from the actually image
+        - Wtf is findHomography? (DONE)
+            - homography: matrix transform
+                - Find matrix transfromation from 1 set to another using RANSAC
+                    - HUH? WHAT DOES RANSAC DO?
+                    - If you want to map the objectImage to the frame you got 
+            - cv2.findHomography(source_pts, destination_pts, cv2.RANSAC, 5.0)
+                - What are source_pts?
+                    -array: np.float32([ keypoints_cropped_region[m.queryIdx].pt for m in good_matches ]).reshape(-1,1,2)
+                    - wtf is queryIdx?
+                        - it bascially store the index of feature in the orignial list 
+                    - keypoint.pt gives a point object (coords of the key points)
+                        - I can access x and y by pt.x , pt.y
+                    - what does .reshape(-1,1,2) do?    
+                        - Fit the data in (1,2) and you can have as many rows as you want
+        - How does he get the statistical fit?
+            - Get the points objects in the frame
+                - np.float32([ keypoints[m.trainIdx].pt for m in good_matches ]).reshape(-1,1,2)
+            - what does cv2.fitEllipse() do?
+                - find the best Ellipse for the object
+                - Uses this to draw the ellipse on the frame
+                    - cv2.ellipse(frame, ellipseFit, (0, 0, 255), 2, 8)
+    - How does he draw matches?
+        - what does cv2.drawMatches()? 
+            - returns an image
+
+
+STEPS:
+    - Draw surf/sift keypoint on an image (
+        - we need xfeature2d
+         - Could not install it 
+        - using external github project
+            - Takes to much time 
+                - img (30sec)
+                    - 195*164
+                - img2 (5 mins)
+                    -1000x700 (aboutx)
+
+    - Draw orb keypoints on an image (DONE)
+    - Do feature matching in 2 image (DONE)
+        - Not detecting feature properly
+
+GOAL: DETECTING COURT LINES AND BOARD:
+     Do canny edge and then feature matching?
+
+    Try good featuers to tack?
+    Do canny on a single image(Done)
+    Filter edges in canny
+        - Did really bad
+    Look into Hough Lines Detection
+        - The following paper detects the main court lines 
+            -https://web.stanford.edu/class/ee368/Project_Spring_1415/Reports/Cheshire_Halasz_Perin.pdf 
+            - Change colour space (Done)
+            - Convert to H-Space (Done)
+            - Create binary model
+                - Alot of pixel values are being set to 0 
+                - They dont pass the threshold value
+                    - setting threshVal = 40 works
+            - Perform erosion and dialiaton(DONE)
+            - Perform Canny edge (DONE)
+            - Hough transform in order to detect the line
+        - THe following paper is doing what I want
+            - https://www.cs.ubc.ca/~murphyk/Papers/weilwun-pami12.pdf
+                - They match the court model with the edge of the video frames to establish correpondence
+                    - What is a court model?
+                        - - What does it mean to match edge of the vide with court model?
+                            - The edge of the video frames are computed using Canny detector
+                                - You have to specify firt frame homography? How do I get this?
+                    - What does establishing correspondence mean?
+        - The following paper is doing court detection has code for it 
+            -https://github.com/stephanj/basketballVideoAnalysis/blob/master/court-detection
+            - houghlines methods just does not work too well
+            - Trying the autoencoder way
+                - What do I have to build and perpare for this to work?
+                    - WTF is a regularised autoencoder?
+                        - Main idea: Regularize the rescontruction of the autoencoder by introducing more stuff in its loss fuction 
+                            - Basically, controll what it reconstructs
+                                - Example, denosing stuff. We are controlling what it reconstructs. 
+                                - We dont want it to just learn to replicate
+
+
+
+    - Detection by dominant colour
+        - Court colour is the most domninant color (DONE)
+        - The change in the color 
+
+
+Understand basic of features 
+    - Feature unqinuess
+        - High change in in all direction
+    - Types
+        - Harris feature points 
+            - Does really well with Rotation and translation
+            - Bad with scale
+        - SIFT 
+            - Good with scale
+            - Hesassian matrix is talke about when Feature Point Filtering is mention
+                - H: Something to do with eigenValues and eigenvectors
+        - SIFT feature matching
+            - We need to compare features between 2 images 
+                - Uses k-D trees 
+
+The court Detection and the board detection can be solved using Imagesegmentation model
+    - Why would this solve the problem?
+        - The segment can tell us where the board is 
+        - Each section of the court etc 
+    - What kind of dataset do I need to build?
+         - x: image
+         - y: imagemask
+            - Where pixles turn to unqiue integers for class.
+            - Dont conufuse your self. fastai open mask will color code it for you 
+        - codes.txt
+            - where index of the item refer to the specific item 
+            - exmaple. [food, water , pc , ...]
+                - in your mask your should have pc pixels labeled as 3
+
+    - What tool do I need to make the data set?
+        - How to install the tool?
+            - Try pixelAnnotationTool : https://github.com/abreheret/PixelAnnotationTool/releases
+                - Cant download 
+            - Try: https://image.predicted.ai/app
+                - Can not download the images/ Works in icognito
+                - Files to segment
+                    - Train
+                        - 2-Pointer 
+                            - #13e9d5
+                        - 3-Pointer
+                            - #f40930
+                            - TrainFolder:(DONE)
+                            - ValFolder: Dpme
+                        - Dunk
+                            - Train:(DONE)
+                            - Valid: (DONE)
+                        - Layup
+                            - #1a07e7
+                            - (DONE)
+                        -Other
+                            - #c404e5
+                        - Board 
+                            - #1fe40c
+                        - Freethrow
+                            - #d3da00
+                    - Valid 
+                        - 3 Pointer
+                        - Dunk
+                - All the lables file go to Labels folder
+        - What folder setting do I need for the data?
+            - This the set for camvid from youtube video
+                - https://www.youtube.com/watch?v=MpZxV6DVsmM&t=193s: @1:03:41
+                - data/camvid/images/imageID.png
+                - data/camvid/images/labels/imageID_mask.png
+                    - Write a function that retuns path to mask for that image
+    - Do I need to prepare the images agian or can I use what I have gotten?
+        - Have about 200 image in the Action Classfication dataset
+        - 150 for training 
+        - 50 for validation
+    
+
+Finish making the U-Net dataset (COMPLETE)
+Train the Fastai U-Net Model
+    - Downlaod the fastai colab notebook (DONE)
+    - Look at the pixel codes for the mask (DONE)
+        - What is inside? (DONE)
+            - Unqiue values of 
+                - array([0, 1, 2, 3, 4, 5], dtype=uint8)
+                - [{"name":"3Point","color":"#f40930","id":2},
+                    {"name":"Other","color":"#c404e5","id":0},
+                    {"name":"2Point","color":"#13e9d5","id":1},
+                    {"name":"Board","color":"#1fe40c","id":3},
+                    {"name":"Freethrow","color":"#d3da00","id":4},
+                    {"name":"Layup","color":"#1a07e7","id":5}
+                  ]
+    - Combine the collected data to the appropriate folder style (DONE)
+    - Upload the file to Gdirve 
+    - Learning how to debug NN (Notes from Andrews Ng course)
+        - When do I need more data?
+            - Realtionships
+                - DatasetSize Proportional to Training Error---(Platoes) (Starting to learn fitting)
+                - DataSize Inverse Proportional to Validation Error (Platoes) (After learning from a big dataset)
+                - DataSize not related underfitting/High bias
+                - DataSize Proportional to overfitting/high varience
+        - Increasing or decreasing the lamda?
+        - Steps:
+            - Divide the data
+                - training (0.7)
+                - test (0.3)
+                    - Compute error on test set
+            - Bias vs Variance 
+                - High bias/underfitting
+                    - Not enough features
+                - High varience/over fitting 
+                    - Too good in training set but bad at validation 
+                - Regularizattion lambda
+                    - Too low lambdaL: High varience/overfitting
+                    - Too high lamda: High bais/underfit (Dont punish the weights too much)
+                - CHOOSING THE RIGHT LAMBDA!
+                    - Do a lambda/penelaty test
+    - Use smaller images weigths to train on bigger images
+        - Canvid: orginal size= ([720,960])
+    - Model is training....... 
+        - Do the stage-2 (DONE)
+
+Try predicting on a image with the unetmodel 
+    -Useful links:
+        - Converting Imagesegment to opencv: https://forums.fast.ai/t/converting-imagesegment-to-opencv/57838/2
+    - Load the exported mdel
+        - Requires you to define the accuary function acc_courtSeg
+    - Prediction test
+        - Predictin using the source size?
+            - It returns me a image segment object and a tensor and a matrix
+                - (y, pred, raw_pred)
+                    - Line383 : https://github.com/fastai/fastai/blob/master/fastai/basic_train.py#L395
+            - How do I use this output? (DONE)
+                - how does learn.show_results work?
+                    - The learner is a unet leearner, the show_results function be different from the cnnn ones
+                         - ds.x.show_xyzs(xs, ys, zs, **kwargs) is called 
+                            - What is xs ,ys , and zs??
+                                - xs is a list of: ds.x.reconstruct(grab_idx(x, i)) object
+                                    - What does reconstruct do?
+                                        - transform a pytorch tensor back into an ItemBase. 
+                                        - the opposite of calling ItemBase.data.
+                                        - What is an ItemBase?
+                                            - Something that store the tensor
+                                        - What does this function return?
+                                             - returns
+                                                - Image(t.float().clamp(min=0,max=1)) 
+                                                - ImageSegment(t)
+                            - test_img.show(y=x[0], figsize=(15,15))
+                                - seems to work.
+                                - x[0] is what we want
+                                    - x[0].data gives us the class mask (THIS IS WHAT WE NEED)
+                                        - How does it color the mask?
+                                            - x[0] has the same effect as openmask()
+                                                - This is because openmask returns ImageSegment object
+                                                    - Has save() function
+                                                        -  The saved image is in [0..1,]/class mask version
+                                                    - Has show() function. 
+                                                        - Line 238:
+                                                            -  https://github.com/fastai/fastai/blob/master/fastai/vision/image.py#L224
+                                                        - Is where the class is turned colourful.
+                                                        - calls the show_image function
+                                                            - Line 431: https://github.com/fastai/fastai/blob/master/fastai/vision/image.py#L224
+                                                            - show_image(self, ax=ax, hide_axis=hide_axis, cmap=cmap, figsize=figsize, interpolation='nearest', alpha=alpha, vmin=0, **kwargs)
+                                                                - cmap: 'tab20'
+                                                                - alpha: float0.5
+                                                                - interpolation='nearest'
+                                                                - vmin=0
+                                                                -This function first converts the to something else
+                                                                    - using image2np(image.data
+                                                                        - converts the tensor image to numparray image
+                                                                - Applying cmap is how it coverts [0...1] to coloured image
+                                                        - Summary:
+                                                            - openMask(file)
+                                                                - openImage
+                                                                    -Line 393: https://github.com/fastai/fastai/blob/master/fastai/vision/image.py#L224
+                                                                    - show_image
+                                                                        - What the fk is plt
+                                                                        - return an AxesIamge
+                                                                        - Convert the Axes image to opencv image 
+                                                        - convert the image to RGBA to RGB (DONE) 
+                                                            -  Turn it into BRG
+                            - NEXT: READ the post from Pritesh Gohil
+                                - https://stackoverflow.com/questions/28757348/how-to-clear-memory-completely-of-all-matplotlib-plots
+                                    - Write a functions that reset the figure size
+                                    - Write a function that applys cmap given an image mask
+                            - Apply wls-filtering to import the prediciton
+                                - 
+
+
+
+
+
+        - Producing the mask image in notebook (FAILED)
+            - What is the most effiecent way to colourmap
+                - Well we pass in img to show_image() it produce colour full image
+                    - Look at the source how it produces the colour full image
+                    - It passes it to AxexImage(self...) // slef refers to the [0..1] image
+                    NEXT: I have Array of class mask. I need to apply cmap to it and get new coloured array.
+                        - Try checking fastai fourm if we can save the colour map image
+                            - Found nothing
+                        - Using the function found in stackoverflow
+                            - https://stackoverflow.com/questions/52498777/apply-matplotlib-or-custom-colormap-to-opencv-image
+                            - What does scalarmappable do?
+                                -  scalar data to RGBA mapping
+                                    - because the are all in range [0,1,..5], they all get mapp to blue
+                                    - what does scalarMappable.to_rgba do?
+                                        - what does np.linspace do?
+                                            - produces lineraly space numbers 
+                                        - What does cv2.lut do?
+        - Producing the mask image in notebook(DONE)
+            - I have the img as np.array(...)
+                - Can I use fastai to return me AxesImage?
+                    - I can use show_image but it accetps an ImageObject. It then extract the Image data to send to matplot 
+                        - I can send it the ImageSegmentOject as ImagObject but then I have to convert the data tensor to float.
+                            - Does ImageSegmentOBject allow me to change the data to a new data of float?
+                                -...
+                - Can I just use matplotlib 
+                    - What does imshow return?
+                        - AxesImage
+                        - Bbox image
+                            - How does show_img make axesImage
+                            - Next look at this: 
+                                - https://stackoverflow.com/questions/13623301/convert-contour-matplotlib-or-opencv-to-image-of-the-same-size-as-the-original
+                                    - Get the image with out plotting it the image
+                                        - How does im_plot.make_image know which image I am talking about?
+                                            - I am telling it in plt.imshow. And plt.imshow must returns image.axesImage    
+                                                - How does plt.imshow make the axesImage?
+                                                    - It calls gca().imshow()
+                                                        - What is gca()?
+                                                            - returns an axiesimage object
+                                                            - the imshow() function of axesimage object is returned
+                                                                - Does that mean axesimage imshow function accepts array?
+
+
+                                                       - How does gca return me the axes image?
+        - Make a fuction that takes mask and returns the usable image              
+
+
+Team detection
+    - I need to a model that does human detection
+        - Human detection Now working
+NEXT: Filtering the Human detection, by box ratio, area then filtering these people for team (HOLD)
+
+
+
+Debug:
+    - CUDA out of memory. Tried to allocate 24.72 GiB (GPU 0; 7.43 GiB total capacity;(SOLVED)
+        - Resize/crop/pad the training image set to fit the standard sized used in the pretrained model you are using. Ex: 224x224 for Resnet, 299x299 Inception etc
+        - Look at how to resize the dataset
+            - Fix: The accuracy function was not great
+
+    - figureImage.make_image() does not work (SLOVED) 
+        - say: 'str' object has no attribute 'dpi'
+            - fac = renderer.dpi/self.figure.dpi
+            - It make sense, because renderer is a string
+            - How does axesimage makes its renderer
+                - It does not use the rendere varaible
+                - What is a rendere? It not a dictionary because we cant do rendere.dpi 
+                    - My guess is it is some kind of object
+                        - Made an renderer object and passed it down
+
+
+
+
+
+
 
 
