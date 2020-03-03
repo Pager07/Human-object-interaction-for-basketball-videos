@@ -898,7 +898,9 @@ Try predicting on a image with the unetmodel
                                 - https://stackoverflow.com/questions/28757348/how-to-clear-memory-completely-of-all-matplotlib-plots
                                     - Write a functions that reset the figure size
                                     - Write a function that applys cmap given an image mask
-                            - Apply wls-filtering to import the prediciton
+                            - Apply wls-filtering to import the prediciton (STOPPED CHASING)
+                                - You can't because you need left and right image
+                            - Try on a video that was not in the trianing or validation set
                                 - 
 
 
