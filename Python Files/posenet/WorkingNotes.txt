@@ -134,8 +134,8 @@ I getting Confused with W and H
     OPENCV
     - img.shape = [360,490]  = (H,W)
     - cv2.resize(img , (490,360)) = (W,H)
-    - cv2.cricle(img, (490,360)) = (W,H)
-
+    - cv2.cricle(img, (490,360)) = (W,H)]
+    - img[row ,col] : [H,W]
 I have an array of image -> FastAi Image Object (NEXT)
 
 Detection on a video
@@ -901,7 +901,8 @@ Try predicting on a image with the unetmodel
                             - Apply wls-filtering to import the prediciton (STOPPED CHASING)
                                 - You can't because you need left and right image
                             - Try on a video that was not in the trianing or validation set
-                                - 
+                                - (WORKING YEAH!)
+                            - 
 
 
 
@@ -956,9 +957,77 @@ Try predicting on a image with the unetmodel
 Team detection
     - I need to a model that does human detection
         - Human detection Now working
-NEXT: Filtering the Human detection, by box ratio, area then filtering these people for team (HOLD)
+    -Filtering the Human detection, by box ratio, area then filtering these people for team (DONE)
+        - Only draw the prediction if the following conditions satifies
+            - Box size
+                - Find the area of the box
+                    - What does box from prediction contain=[left , top, width ,height]
+                        - what does each element stand for?
+                            - top left coord : (left,top)
+                            - bottom right coord: (left + width, top + height)
+                        - Yeah, you can just do width * height
+                - Find the area of the image 
+                - boxPercentage: aereaBox/area_img
+                    - <=0.5
+            - Label
+                - DONE
+        - I want it suh that at any given time (HOLD) 
+            - The number of detection is 11 
+    ROI color extraction
+        - Extract ROI
+            - Crop the image 
+                - easy list slicing
+        - Process the ROI 
+            - Find the team section
+                - max_ratio
+                    - We only know the for sure the team color if 
+                    - max ratio is greater than some threshold
+                    - How do we get max_ratio?
+                        - its the maximum value of the ratioList
+                        - What is the ratio list?
+                            - Its an empty list that gets filled 
+                            - What is it filled it?
+                                - it is filled with ratio
+                                - What is the ratio?
+                                    - color_pix/tot_pix
+                                    - what the fk is color_pix? (RETURN HERE)
+                                        - count_nonblack_np(output)
+                                        - number of non-black pixels in the image
+                                        - Are we still talking about cropped image?
+                                            -NO we are talking about:
+                                                - cv2.bitwise_and(image, image, mask = mask)
+                                                    - what is the image?
+                                                        - this is the cropped image
+                                                    - What is the mask?
+                                                        - cv2.inRange(image, lower, upper)
+                                                        - What does cv2.inRange() do?
+                                                            - thresholding based on range of pixels instead of 1
+                                                            - Because hue tell use what color its with just scalar value. We use H thus HSV
 
 
+NEXT: Finish reading detect_team function at.. and finish the "What is the mask thread"
+    - https://github.com/priya-dwivedi/Deep-Learning/blob/master/march_madness_team_shot/object_detection/March_Madness_Object_Detection.ipynb
+    -https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html
+
+
+
+Ball Regression
+    - Trying seeing if you have turned convert the image to RGB before you are passing it to the detector?
+    - The image regresion model is up right bad. Because the dataset that I trainon was really bad
+        - Remake the dataset.
+            - What format should the test and validation set be in?
+                - The file name are the coords
+                - eg. 9,10.png
+            - Find image point labeler tool 
+                - Predict 2 points
+                    - The shooting player
+                    - The ball 
+                    - In THAT order!
+        - Train the model
+            - I have to rename each file 
+                - humanx, humany , ballx, bally.png
+                    - exatract the information out of the xml files 
+                    - 
 
 Debug:
     - CUDA out of memory. Tried to allocate 24.72 GiB (GPU 0; 7.43 GiB total capacity;(SOLVED)
