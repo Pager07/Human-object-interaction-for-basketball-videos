@@ -988,23 +988,69 @@ Team detection
                             - Its an empty list that gets filled 
                             - What is it filled it?
                                 - it is filled with ratio
-                                - What is the ratio?
+                                - ratioList = [fractionOfPixelsInColourClass1 , fractionOfPixelsInColoutClass2]
+                                - What is the ratio? (DONE)
                                     - color_pix/tot_pix
-                                    - what the fk is color_pix? (RETURN HERE)
+                                        - numberofpxilesthatfitthecolorcertia/totoalnumberofpixles
+                                        - In simple terms: find the ratio of pixels that find into your 2 colour classes
+                                    - what the fk is color_pix?(DONE) (RETURN HERE)
                                         - count_nonblack_np(output)
+                                            - in a cropped region of a white player:
+                                                - There still exist black pixels 
+                                                    - If the pixels are black that means we threw them away
+                                                - Simple terms: 
+                                                    - it returns number of pixles that falls in the boundary
                                         - number of non-black pixels in the image
+                                            - returns the number of pixles that were in the selection
+                                            - 
                                         - Are we still talking about cropped image?
                                             -NO we are talking about:
                                                 - cv2.bitwise_and(image, image, mask = mask)
+                                                    - What does bitwise_and do?
+                                                        - mask contains YES region. (YES region = white area)
+                                                        - bitwise_and: in a given image keeps the YES regions only
                                                     - what is the image?
                                                         - this is the cropped image
                                                     - What is the mask?
                                                         - cv2.inRange(image, lower, upper)
-                                                        - What does cv2.inRange() do?
+                                                        - What does cv2.inRange(image, lower, higher) do?
                                                             - thresholding based on range of pixels instead of 1
                                                             - Because hue tell use what color its with just scalar value. We use H thus HSV
+                                                            - How does she get the threshold? (DONE)
+                                                                - For each color there is a threshold
+                                                                    - eg. color: (lower_bound , upper_bound)
+                                                                    - white: ([0,0,200], [255,255,255])
+                                                                    - black: ([0, 0, 0], [255, 255, 60]) 
+                                                                    - Where do these numbers come from?
+                                                                        - What do these numbers mean?
+                                                                            - [lowHue,loewSaturation,lowValue] 
+                                                                            - [highHue,......]
+                                                                        - Why is the lower bound for white 0?
+                                                                        -Experiment
+                                                                            - [0,0,0] , [0,0,0]
+                                                                                - All black
+                                                                            -[255,255,255] , [255,255,255]
+                                                                                - only the whitest area is YESED
+                                                                            - [0,0,0] , [255,255,255]
+                                                                                - All blacked
+                                                                                - WHY?
+                                                                                    - 
+                                                                            - [1,1,1] , [255,255,255]
+                                                                                - All yesed
+                                                                            -  mask o yellow (15,0,0) ~ (36, 255, 255)
+                                                                                - Is it yellow:
+                                                                                    -(36,...) or (...,36)
+                                                                                    - ITs: (36, 255, 255) ~(BGR)
+                                                                                -White
+                                                                                    - [0,0,200], [255,255,255]
+                                                                            - H: 0-179, S: 0-255, V: 0-255.
+                                                                    - The followin link teaches use how to set the boundaries in HSV
+                                                                        - https://stackoverflow.com/questions/10948589/choosing-the-correct-upper-and-lower-hsv-boundaries-for-color-detection-withcv
+                                                                        -User: Knight
 
-
+                    - When do we turn the image into HSV
+                        - The image we pass into inRange has to be HSV
+                            - The arguments that 
 NEXT: Finish reading detect_team function at.. and finish the "What is the mask thread"
     - https://github.com/priya-dwivedi/Deep-Learning/blob/master/march_madness_team_shot/object_detection/March_Madness_Object_Detection.ipynb
     -https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html
@@ -1044,8 +1090,6 @@ Debug:
                 - What is a rendere? It not a dictionary because we cant do rendere.dpi 
                     - My guess is it is some kind of object
                         - Made an renderer object and passed it down
-
-
 
 
 
