@@ -5,9 +5,9 @@ Proejct Goals:
     - Action Classification (DONE)
         - Find out why the prediction are so shit?
         -Does it differ If I create my own dataset?
-    - Player Detection 
-    - Start on team seperation 
-    - Court and board Detection
+    - Player Detection (DONE)
+    - Start on team seperation (DONE) 
+    - Court and board Detection 
 ===================================================================================================================================================
 ===================================================================================================================================================
 ===================================================================================================================================================
@@ -835,7 +835,7 @@ Train the Fastai U-Net Model
     - Model is training....... 
         - Do the stage-2 (DONE)
 
-Try predicting on a image with the unetmodel 
+Try predicting on a image with the unetmodel (COMPLETE)
     -Useful links:
         - Converting Imagesegment to opencv: https://forums.fast.ai/t/converting-imagesegment-to-opencv/57838/2
     - Load the exported mdel
@@ -851,7 +851,7 @@ Try predicting on a image with the unetmodel
                          - ds.x.show_xyzs(xs, ys, zs, **kwargs) is called 
                             - What is xs ,ys , and zs??
                                 - xs is a list of: ds.x.reconstruct(grab_idx(x, i)) object
-                                    - What does reconstruct do?
+                                    - What does reconstruct do?ww
                                         - transform a pytorch tensor back into an ItemBase. 
                                         - the opposite of calling ItemBase.data.
                                         - What is an ItemBase?
@@ -954,7 +954,7 @@ Try predicting on a image with the unetmodel
         - Make a fuction that takes mask and returns the usable image              
 
 
-Team detection
+Team detection (COMPLETE)
     - I need to a model that does human detection
         - Human detection Now working
     -Filtering the Human detection, by box ratio, area then filtering these people for team (DONE)
@@ -1050,7 +1050,19 @@ Team detection
 
                     - When do we turn the image into HSV
                         - The image we pass into inRange has to be HSV
-                            - The arguments that 
+                    
+                    - I have to detect the teams for each bounding box 
+                        - It will save time to only detect the teams for the bounding boxes we are using 
+                            - So do it after checking bbox fitting (inside the if loop)
+                                - But before drawPred, because we want to be able to write the teams 
+                                    - if(bbFit)---CodeForTeamDetection-----drawPred()
+                                        - Wwrite detectTeam function that takes in box coord 
+                                            - Finds the ROI
+                                            - Cacaulatest the ratio 
+                                            - Compare the ratio
+                                        - How do I test detectTeam function
+                                            -
+                        - 
 NEXT: Finish reading detect_team function at.. and finish the "What is the mask thread"
     - https://github.com/priya-dwivedi/Deep-Learning/blob/master/march_madness_team_shot/object_detection/March_Madness_Object_Detection.ipynb
     -https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html
@@ -1091,8 +1103,139 @@ Debug:
                     - My guess is it is some kind of object
                         - Made an renderer object and passed it down
 
+    - Debug
+        - Left is a negative number
+            - Which frame is this?
+                - 496
+            - Does it run sooomthely run when you are not detecting the teams?
+                - YES!
+                - Why doesn't the negative left cause problem in the case?
+                    - Does it still exit?
+                        - Yes, it still exit
+                    - Try: Getting the coords of that frame, use draw function to see wheer that box is in the frame
+                        - -4,966,90,1075
+                        - left,top,right,bottom
+
+    - Debug
+        - All the teams are either Team0 or unertain
+            - How does the masked image look like?  
+                - getColorRatio is the function that is making te oi  masked
+                    - For the seecond color everything is black
+                        - meaning nothing stafies the given color range
+                    - Try: anthoer image 
+                        - See if the methhod for choosing color is spot on 
+                        - with:  ([115, 150, 0], [125,255 , 20])
+                            - it is picking up whatever green is 
+                                - The range I have specified maps to color green in RBG
+                                - So what might be happening is:
+                                    - I pass in HSV image -> Th court lines truns to green -> cv2.inRange for that BGR color
+                    Try: I tried creaeting mask 
+                        - The mask is faulty for that color 
+                            - The bounds i tired for colour blue: 
+                                - np.array([115,150, 0]), np.array([125,255 , 20])
+
+                        - Some other guys need to select blue 
+                            - My mistake:
+                                - Having a very small saturation bounds 
+                            - Learning point
+                                - cv2.bitwise_and(img , img , mask=mask)
+                                - Does not change the image, it just uses the shaped of the dest 
+                            - Another Big mistakes:
+                                - I am thinkg if TEAM1 has colour red in RBG space 
+                                    - it will have the same colour in HSV space
+                                    - AND I AM passing in RED HSV value
+                                - IN HSV TEAM1 have this buleish colour
+                                    - So I have to pass in the the bule HSV colour
+                                        - Example: 
+                                            DARK RED:167,172,55
+                                                - Dominiat color: ~167 H
+                                                - Satutauration: ~172
+                                                - value: ~55 (Lower the value, darker the color)
+                                            - Lower bound
+                                                - To the left from starting point:H
+                                                - To the top from the starting point:S
+                                                - lower number: V
+                                            - Upper bound
+                                                - To the right from the starting point
+                                            - Learnt: Having a greater H range help picks colour 
+- Debug: 
+    - the seoncd loop
+        - The roiMasked is totally black 
+            - That is not what I wanted 
+                -roiMasked = cv2.bitwise_and(roi,roi,mask=mask)
+                    - is roi the same for thefrist loop/?
+                        - No it is not the same
+                        - ing show == True
+                            - we have: 
+                                - roi = cv2.cvtColor(roi, cv2.COLOR_HSV2BGR)
+                                    - Now roi is a BRG img
+                                - so we we go back in the start
+                                    -  mask = cv2.inRange(roi , np.array(teamColorLower) , np.array(teamColorUpper))
+                                        - we are passing a brg image
+    - In that region
+        - Calcualate the numbers of pixels actiavted
+            - is this the same both?
+                - NO:
+                    - totalPix = countNonBalckPix(roi)
+                        - What is roi?
+                            - I hope it a rectange of HSV
+        - Calcuate the number of pixles activated for T1
+        - Calcuate the number of pixles activated for T2
+            - 
+- Debug: (DONE)
+    - Even though the mask is masking the right regions 
+        - I am not getting right preds
+            - For teamwhite: totalColrPix:429816 , totalPx:1205325
+            - For team red : totalColrPix:210525 , totalPx:1205325  
+    - Big assumption that I was making
+        - Background colour radically differnt form the 2 teams color
+            - I assumed that the HSV color i gave 
+            - Blacked out the background. 
+            - But it did not.
 
 
+Now I have courtSegmentation model and Posnet model
+- I want to combine them both to produce a new dataset
+- Train a classifer on it
+- Which files were used to make the stickfigure dataset?
+    - ActionClassification3 Videos
+- Add the courtSegmentation model to the code 
+    - I need stick  figures on a court mask
+        - Given a frame the
+            - Get the court mask
+                - Import the court model
+                    - There are extra code that will run on import
+                        - Make a copy and in that copy only keep the things you want
+                        - How do I import a ipynb file? 
+                            - Looked at the CV work
+                -  Pass courtSeg model the required frame an get out up
+                    - Test that it returns what I want
+                    - In timeCompression function 
+                        - instead of psasing in blank iamge 
+                    - What happens when you add a black image to a image
+                - CourtSeg.getCourtMask returned mask is not the size of origninal image
+                    - So shapes off the diferent images are as follows
+                         - recall: 
+                            - .shape (H,W)
+                            - resize( (W,H))
+                         - mergedImage.shape : (1080, 1920, 3)
+                         - courtMask.shape : (720, 1280, 3)
+                    - It size the size of 720 X 1280
+                        - What is H x W
+                            -
+                    - This means I have to do 2 things
+                        - When merging the court mask, merge it with empty image 720 x 1280
+                    - I need the mergedPose to be the same size 
+                        - So Before I send it off for pose detection
+                            - Convert it to that 720 x 1280
+            - The court is really dark
+                - NEXT: Try stacking court seg in datamoe and and a raw pose frame
+                
+            - May be only use 1 colur for the poses
+                - Color code the poses by team?
+            -
 
+            - Get the stick figures
+        - Put the figures on the court mask instead of an empty black image
 
 
