@@ -1229,13 +1229,277 @@ Now I have courtSegmentation model and Posnet model
                         - So Before I send it off for pose detection
                             - Convert it to that 720 x 1280
             - The court is really dark
-                - NEXT: Try stacking court seg in datamoe and and a raw pose frame
-                
+                -  Try stacking court seg in datamoe and and a raw pose frame
+                    - stacking: [background] on [pose] - gives brighter imag
+                - The reason it was so dark because I am only stacking 9 imagges
+                - The Stick figure seem to lose their color if I use
+                    - cv2.addWeighted()
+                    - Masked I loss some details
+            - Using unstacked court?
+                - 
+
             - May be only use 1 colur for the poses
                 - Color code the poses by team?
             -
 
             - Get the stick figures
         - Put the figures on the court mask instead of an empty black image
+
+Run the free-throw dataset and the DUNK
+Where to go next?
+    - what are my goals, have I completed them all?
+        - Ball detection
+        - Action Classification
+            - Pose detection
+            - Court Segmentation
+        - Team Detection
+            - Object detection
+                - Can I improve this?
+                - Filter out the false positives
+                    - Refs and Spactators
+        - Producing team stats
+
+Team Detection with K-means
+    - https://github.com/stephanj/basketballVideoAnalysis/blob/master/color-detection/show_colors.py
+    - Steps
+        - For each image file
+            - Convert it to RGB
+            - Reshape it 
+                - NumberOfPixles x Features(Channels)
+            - pass it Clutersing Algorithm
+                - Will find: clt.cluster_centers_
+                    - c1:[] , c2:[] , c3:[]
+                    - A pixel will go in to one these clusters
+            - Find histogram
+                - Find the percentage for each cluster
+            - Plot bar chart
+                - 
+
+- Idea
+    - Only get the pose of the player at the found bounding boxes?
+    - Change from yolo to mask-RCNN
+
+
+Ensembl learning?
+    - https://www.analyticsvidhya.com/blog/2018/06/comprehensive-guide-for-ensemble-models
+IDEA:
+    - Action classification done only using Pose stuffp
+    n
+        - Using K means clustering?
+            - 
+
+Team-detection
+    - Swap yolo for mask RCNN
+    - Use k-means clustering for for pixles 
+        - To find the most common color for the pixels
+    - Apply k-means clustering for image colours
+        - Team0 , Team1 , Others
+    - Write a detectTeam() function
+        - I want to ouput a team value
+            - Find the dominminat colors using clustering
+                - Compare the dominant color with 2 primary colors
+    - Write a function that will do basic RCNN team detection (DONE)
+        - Edit the detectTeam Basic function to handle FASTRCNN
+            - getRoi
+                - it gets roi using 
+                - update the roi using a mask
+                - Can I send boxes to postprocess?
+                    - is boxes == results?
+                        - results is a grid
+                            - row/results col/detection
+    - Write a function that will do FasterRCNN with K-Means 
+
+Debug
+    - we are setting image[startY:endY, startX:endX][mask] as roi
+        - image[startY:endY, startX:endX][mask] = (4667,3)
+        - What we want is normal bbox as the roi but region outside the mask is 0
+            - What does image[startY:endY, startX:endX][mask] return?
+                - Returns all the pixels in the mask
+Debug:
+    objc[62273]: Class RunLoopModeTracker is implemented in both /Users/sandeep/opt/anaconda3/lib/python3.7/site-packages/cv2/.dylibs/QtCore (0x11a4e97f0) and /Users/sandeep/opt/anaconda3/lib/libQt5Core.5.9.7.dylib (0x11ff98a80). One of the two will be used. Which one is undefined.
+
+    QObject::moveToThread: Current thread (0x7feb5089c590) is not the object's thread (0x7feb50d2fe60).
+    Cannot move to target thread (0x7feb5089c590)
+
+    You might be loading two sets of Qt binaries into the same process. Check that all plugins are compiled against the right Qt binaries. Export DYLD_PRINT_LIBRARIES=1 and check that only one set of binaries are being loaded.
+    qt.qpa.plugin: Could not load the Qt platform plugin "cocoa" in "" even though it was found.
+    This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+    Available platform plugins are: cocoa, minimal, offscreen.
+    Fix: python 4.2 not stable
+
+
+Action Classification 
+    - Learn to use weights and bias
+    - What metric do I use for imag classification
+        - Explaination for Percison and Recall for muticlass classification
+            - https://towardsdatascience.com/multi-class-metrics-made-simple-part-i-precision-and-recall-9250280bddc2
+            - How to get precision and recall score for all the classses?
+                - https://www.kaggle.com/dromosys/fast-ai-news-multi-classify-v2
+
+    - Why do we need to use random seed
+        - https://medium.com/@ODSC/properly-setting-the-random-seed-in-ml-experiments-not-as-simple-as-you-might-imagine-219969c84752
+            - What was the change from?
+                - Acutal model
+                - data modification
+                - result of new random sample
+            - Same seed == same starting point == same sequence of numbers 
+            - When to set the seed?
+                - You have to run random_seed(0), before the first fit;
+                - You have to run it before creating the databunch;
+                    - #Remember to use num_workers=0 when creating the DataBunch.
+                    - Setting random seeds before creating the DataBunch is needed to have a consistent Train/Validate split.
+                - And you have to call it every time for each different time you call fit.
+                    -  the creation of the new learner that reset the random seed.
+    - See if you can do action classfication using pose only
+        - Sometime there are enlongated arms
+        - See if using openpose yeild better reuslt
+            - The looking and running a unknown model take a very long time 
+            - Hence, I am not doing this
+        - Making ovservation
+            - Player is detected
+            - Player is not detected
+            - Theere are front shots where pose of spectators are detected
+            - Notice any Clustering?
+                - 
+            - Look at the Ref?
+            - Is there any pattern in the their Arms 
+            - Direction the player is facing?
+                - The bent in their joints?
+                    - The direction player is looking at is always the ball?
+                    - The position of the ball
+                        - Imagine if ther rays coming out of the detect players eyes
+                            - Does the intersection of these points tell me a estimated position of the ball?
+                                - Its ture that the ray must be deflected by some degree.
+                        - I have this idea, Reducing the region of search. 
+                            - Try drawing a line from ear to eye 
+                                - Do this for every player
+                                    -  get_adjacent_keypoints
+                                        - Returns 2 points from the player joints where the line needs to drawn
+                                    -  Get the coords in the line
+                                        - Retun 2 points from the player joints (left ear , left shoulder) and (rE and rS)
+                                    - I hav to filter out lines 
+                                        - Why do I want to filter out some lines?
+                                            - Some lines are just absurdly wrong
+                                        - Can we filter some lines using the slope?
+                                        - Can I use the angle between lines?
+                                            - What does the angle between 2 lines tell me?  
+                                                - The shooters don't neccesarry have the smallest cone angle 
+                                                -  the slope of the line does tell me where the player is facing 
+                                                    - There are players who have general facing direction
+                                                    - Next find the general facing direction(DONE)
+                                                        - Now I know where the players are facing
+                                                            - This does not help me tell extacly a thhings is 
+                                                                - The possilbe location of the ball?
+                                                                    - Closest player in that direction probably has the ball
+                                                                        - There could be multiple players in that line of sight
+                                                                        - Does the hold the ball in the line of sight have opposite line of sight?
+                                                                            - The person that is being looked at the most?
+                                                                                - Where is this mistery persion
+                                                                                    - Left or right?
+                                                                                        - if the distance from start point to end point is positive 
+                                                                                            - he is looking left
+                                                                                            - else right 
+                                                                    - intersection of the line sight act as possible location of the ball?
+                                                        - There are outliers
+                                                        - Look at bunch of clips where people are shooting
+                                                            - I notice defending shoot needs full arm up
+                                                            - I notice when player shoots the ball there is a net change in y-direction
+
+
+                - Why am I doing this?
+                    - I already have the team
+                        - what is my goal?
+                            - I am searching for any insight that I can bring to Action classification or ball possition by observing the way players
+                            - May try doing detection  footage that are stable with the camera?    
+    - For each detected pose
+         - Each human being what are they doing 
+            - So I need a way to label the poses for each human being?
+                - In the mirror project
+                    - They collected full body images of different movements
+                         - stored the poses
+                            - Make these poses comparable by
+                                - crop the image using bounding boxes
+                                - rescale it to constant size
+                                - apply l2 normalization to the key point coordinates
+                            - How was the poses stored?
+                                -  1D array: [x1,y1,x2,y2......]
+        - My idea:
+            - Big picture:
+                - Make a dataset (DONE)
+                    - X = (person X pose)
+                    - Questions:
+                        - How to collect the data?
+                            - Collect poses of each individual humans
+                                - I can a pass a frame
+                                    - Get  all the poses for the humans
+                                        - Detect all the humans
+                                            - YOLO
+                                                - Will posenet work well with croped images?
+                                                    - The cropped image is very low res
+                                                    - There are mutliple human being detected
+                                                        - How Do I isolate
+                                                            - Take the biggest
+                                            - Use posenet 
+                                            - Manually crop 
+                            - Catogarise them 
+                                -
+                        - How to take in account the confidence score?
+                - Figure out which which points refer to which
+                    - {10:'left_ankel' , 13:right_ankel , 9:'left_knee',12:'right_knee',8:'left_hip',
+                       11:'right_hip', 4:'left_wrist',7:'right_wrist', 3:'left_elbow',6:'right_elbow',
+                       2:'left_shoulder',5:'right_shoulder',1:'nose',17:'right_ear',15:'right_eye',
+                       14:'left_eye' , 16:'left_ear'}
+
+                    -[,,, , ,
+                     , ,,, 
+                      ,,,,
+                      , ]
+
+
+
+Debug:
+    - I only condsidered the case when blue line has greater angle
+        - what color does theta1 refere to?
+            - Theta1 == bule
+            - Cosidering for 
+                - B: -0.18216831047276347 , G:1.5707963267948966  
+                    - Is -0.18 == 0.18?
+                        - (-0.18) == -10deg
+                        - (0.18) == 10deg
+                - I should not be using argMax
+                    - It is easier to look it as blue and green line 
+                - Can we work in degrees?
+                    - What does  theta1 = np.arctan2(p1[1]-p2[1], p1[0]-p2[0]) return?
+                        - returns radians
+                        - when does it return me negatives?
+                            - 
+                    - np.cos()
+                        - takes in radians
+            - I dont know which agnel corrppondes to line
+                - write the angle in the image interms of deree
+            - Look like I have to figure out which quadrant the lines lie in
+                - If they lie in the same quadrand  
+                    - theta is just half the ang
+                - I know how much to from green line
+                    - I don't know which direction to move in 
+        - Because a cone starts from 1 point
+
+
+DEBUG
+    - Find the angle of the two line from the atan2 line 
+        - Each line angle ranges from [0-360]
+    - Find the angel between them = alpha
+    - Add alpha/2 to the line with smaller angle?
+        - Wont work because if the smalle line in the the quad4 and bigg liner is quad3 
+            - add to smaller liner will make it go close to bigger line 
+    - Ad alpha to line with who ever has smaller arc tan
+
+
+
+
+
+
+
 
 
