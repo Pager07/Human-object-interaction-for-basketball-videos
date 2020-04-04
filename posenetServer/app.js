@@ -4,6 +4,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var pixels = require('image-pixels');
 
+var boundingBoxes = [];
 
 const {
     createCanvas, Image
@@ -38,6 +39,13 @@ app.post('/postImage' ,async function(req,res){
 
 });//End of app.post and asyn function
 
+app.post('/getBBox' ,async function(req,res){
+    res.send(JSON.stringify({bbox:boundingBoxes}))
+    
+});//End of app.post and asyn function
+
+
+
 const getPoseDetection = async(imageUrl) => {
     console.log('start');
     // const net = await posenet.load({
@@ -62,16 +70,19 @@ const getPoseDetection = async(imageUrl) => {
     //     scoreThreshold: 0.5,
     //     nmsRadius: 30,
     //     });
-    const pose = await net.estimateMultiplePoses(input, {
+    const poses = await net.estimateMultiplePoses(input, {
         flipHorizontal: false,
         maxDetections: 10,
         minPoseConfidence: 0.15,
         minPartConfidence:0.1,
         nmsRadius: 30,
         });
-    // for(const keypoint of pose.keypoints) {
-    //     console.log(`${keypoint.part}: (${keypoint.position.x},${keypoint.position.y})`);
-    // }
-    return pose;
+    
+    boundingBoxes = [] //reset the boundingBoxese
+    poses.forEach(pose => {
+        var box = posenet.getBoundingBoxPoints(pose.keypoints);
+        boundingBoxes.push(box)
+    });  
+    return poses;
 }
 app.listen(3000);

@@ -1455,6 +1455,14 @@ Action Classification
                      , ,,, 
                       ,,,,
                       , ]
+                    - There is a porblem 
+                        - PART_NAMES contain 17 points 
+                        - While x[0] contain 18 points
+   
+
+
+
+
 
 
 
@@ -1484,6 +1492,8 @@ Debug:
                 - I know how much to from green line
                     - I don't know which direction to move in 
         - Because a cone starts from 1 point
+            0 
+
 
 
 DEBUG
@@ -1497,9 +1507,320 @@ DEBUG
 
 
 
+DEBUG:
+ -  If the point is not visible, then it does not have the point
+
+np.array([
+    [ keypoints[left]['position']['x'] , keypoints[left]['position']['y'] ],
+    [ keypoints[right]['position']['x'] , keypoints[right]['position']['y'] ]
+        ]
+
+        - does it append the first point if the second 1 does not exist?
+            - No because it will fail to create the array
+        - x[0] == keypoints
+            - x[0]: {1:()}
+        - eg : keypoints[poseKeyInX][x|0ory|1] ,
+- poses == x
+    - [{pose}] only 1 inside
+Drawing humans (DONE)
+    - cv2.circle(npimg, center, 3, common.CocoColors[i], thickness=3, lineType=8, shift=0)
+        - Draw a cricle for the keypoint
+            -keypoint: ()
+            - How to get the color for the keypoint?
+                - I have the key for the point eg. 17
+        - center is the cooord 
+        - color is the Colorst ther pose 
+        - Drawing line 
+            - Getting the adjacent points
+                - What does adjacnet_keypoints continas?
+                    - When we extend a array of array does this differe from the normal one?
+                        - The colours are are in RGB convert it to BGR
+        - What are the sizes of the circle and the lines
+            - circleWidth = 6;
+            - lineWidth = 8;
+            - drawSegment([ay, ax], [by, bx], color, scale, ctx)
+            - drawPoint(ctx, y, x, r, color)
+                 - what is ctx?
+                    - is the objects that draw it
+                 - What is scale?
+                    - Not nedded
+Draw the keypoints in the same 
+    - The porblem is in the real video
+    - I will not have access to the pose of the person every single frame
+Action classfication
+    - Goal:
+        - Action classification 
+            - single person pose take the majority action that is not walking etc
+        - More about the goal:
+            - If I have a model that can classifify action using 1 image for everyperson
+                - Then in the demo, I can run for each detected person I can crop the part
+                - Draw their pose and send it to image classifcation algorithm
+                    - This will mean that I will have to classify for many many humans about 10
+                        - This will be a interesting comparison between action classification(GOAL)
+                            - Single person pose (x10)
+                                - More accurate may be?
+                                - But may take more time
+                                    - To imporvove time may be 
+                                        - We can use cosine similarity measures?
+                            - A image with all the poses
+        - I forgot that each imge had to be named differently
+             - I forgot to check the sizes of each generated folder
+            - 
+    - Project Ladder
+        - Be able to draw skeleton(DONE)
+        - Draw skelton on white background
+        - Do I scale the image to 244,244 imagenet size??(FAILED)
+            - Lets do 512x512,Because we trained the model on 512x512
+                - The semnatic of the images changes
+                - 
+            - Make a empty 244,244 image
+            - I need a function to map coords to the 244 coords
+                - I have this function, but dont knwo where
+        - Save the images
+        - Upload the images to the drive   
+            - Currenlty, uploading.........
+        - NEXT: Train Resent on the images
+            - Merge the files
+                - Do a test to move a smalle file from 1 folder to another 
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    - Project Ladder 
+        - Goal:
+            - Find the vector that is most simliar to the pose 
+                - Use the classs of the pose as the predicted actions 
+        - Collect datset
+            - 1 human pose is an array
+                - I need a dataframe that has all the keypoints 
+                - df.append(poses_dict, ignore_index=True)
+                    - There is a problem with this 
+                        - some poses_dict: {'nose':()...}
+                        - some poses_dict: {'head'} // does not contain nose
+                            - if the index is not there nan is placed
+                                - What do I replace my nan values with? 
+                                    - Either we can use proxy
+                                        - I am using a poroxy
+                                            - Use the location of the last connected part
+                                                -  
+                                    - Either we can (-1,-1)
+            - Maybe work with dummy dataset
+                - Rescaling and Resizing 
+                    - All the images are of the same size, thus, not rescaling needed
+                - Applying L2 normalization to the dataset
+                    - Because the imae is not a sqaure, would applying an l2 regularization be approizate
+                        - I believe mapping the image to sqaure size would do no harm, because
+                     
+
+
+                     - Write a function that does L2 normalization on the main df
+                        - I have to spread each tuple in the datafram
+                            - Change the way I load my data to you have 1_x,1_y etc
+                                - Is is best for me to check nan along the rows or cols?
+                                    - get index in unconnnected that is non non
+                                - df.apply(function)
+                                    - the function gets the the row 
+                                        - get all the keys with nan
+                                        - search for the poxry key
+                                            - make a dict for keys to df_keys 
+                                            - The porxy key can be in UNCONNECTED_INDICES OR CONNECTED_INDICES
+                                                - We dont need to make connected indices, we can check if in unconnected indices
+                                                - If in UNCONN
+                                                    - filter through the index that are in key //aka list key of nans
+                                                        -usable_unconnected_key
+                                                            - we can just use the first element
+                                                - If in Connected 
+                                                    - use its closest pair that is available
+
+
+
+
+
+
+
+
+
+
+
+                                        - set the keys x and y value to porxy key x and y
+                            - convert the coord to 244 x 244 space
+                        - Apply l2 normalization
+                            - 
+                        - Save it as csv
+                    - Applying Cosine Simliarity measure
+                        - This article explains consine distacne
+                            - https://cmry.github.io/notes/euclidean-v-cosine
+                            - cosine
+                                - converts the vetors to unit length
+                                - And compare their agian
+                            - eucledian 
+                                - raw distance
+                        - Vantage point trees
+                            - write a function to build a tree
+                                - pass in the data 
+                                    - remove the class columns from the data
+                                    - The data does not contain calss 
+                                        - edit the dataset to contain the class 
+                            - Write a functions that takes in poses and returns poses for each human
+                        - Test Action Clasfication using Cosine
+                            - For each pose I get I need to generate a pose vector
+                                 - ActionClassificatonCosineDataGen file read a vector, maybe I can 
+                                    - pass the poses to the file 
+                                    - get correct poses vector
+                                        - change the keys
+                                            - what should they keys be changed to?
+                                                - nose -> 0_x and 0_y
+                                                    - Map the nose to key relative to raw dict
+                                                    - get the extended_pose
+
+                                                    - Are all the posenet bodyparts in the second file?
+                                                        - unknown is not there
+                                                        - So that mean I will have to find porxy coord for unknown
+
+                                        - that is relative to image 244*244
+                                        - the vector is a list that is in the correct order
+                                        - porxy coords filled?
+                                            - 
+                            - The database is just too big 500,000 imges
+                                - Write a fucnction that track the time spent searching for tree
+                                    - Mean search time for 500,000: 7.012 seconds/pose
+                                    - Mean search time for 169,530 : 4.12 seconds/pose
+                                    - Mean search time for 116,552 : 3.721 seconds/pose
+                                    - Mean search time for 37,085 : 1.804 seconds/poe
+                                - Cut the dataset size only use the middle frame
+                                    - How do I identify the middle frame?
+                                        - Take the 7th frame
+                                        - What do I do with the labels 
+                                        - get_data() 
+                                            - outputs data with labels
+                                        - Just do modules operation and keep every nth index
+                                            - the index start from 0
+                                                - keep 6th, 7th , 8th index 
+                                                - 
+                            - Write a function for weightedDitaceMatching
+                            - Prepare the dataset 
+                                - Load the dataset
+                            - Prepare the poseVector
+                                - Not l2 normalized
+                            - Prepare the theta vector
+                                - [0_x,......]
+                            - Build the tree
+                                - I need weigths?
+                                    - Make the theta 1 for the original data
+                            - fit()
+                                - Reshape the data
+                                    - stack it horizonatlly so that is (10*72)
+                                        -[coorrd.....weights....]
+                                - in the weighted function
+                                    - check if we using this function for making the tree or for prediction
+                                        - predction we will have the second dimension as 72
+                                        - making a tree we will just have 32..but we dont have to check for this 
+                                    - if prediction
+                                        - we want to reshape it to (2x36)
+                                        - poseVector = pv[0]
+                                        - theta = pv[1]   
+                            - Draw 
+
+
+DEBUG
+    - [0_x,0_y] is not in dff
+        - What does 0 refer to in raw?
+            - unknown: Hence, we know that for unknow we should always need to fill it with proxy coord
+        - The dataframe should already contain nan values after getting passed down which function
+            - Before filling the NaN values 
+                - Get_extended_pose 
+                    - no: this function extends whatever the poses_dict has
+                - get_data()
+                    - this function assure that keys that are missing are filled in with Nan
+                - When you create a dataFrame it will automatically 
+                    -  df = pd.DataFrame(data)
+                        - It automatically fills in that 0_x 0_y 1 of any poses have it 
+                        - But because in the posenet results al lthe the poes dont have the key unknown 
+                            - hence wehen creating the data frame 0_x and 0_y goes missing 
+                            - I need to have 0_x 0_y because 
+                                - Original data is made up of vectors that contaon 0_x and 0_y
+                                    - Vptree is built of the vectros
+                                - Later I am planning to use wighted sum 
+                                    - I will need an apporxy weighths for the unknow 
+    - index 9 
+        - has nan value
+            - why is index 9 nan value not filled 
+    - ValueError: setting an array element with a sequence.
+        - getSimilarPosesClasses
+
+Debug
+    - poseVector1 is not getting passed properly
+        - pv[0] is being passed
+            - getPred
+Debug 
+    - All of the prediction are dribble 
+        - Check if this is right 
+            - call findMatch() directly?
+                - Cool I get the similar pose striaght to me 
+                - How can obtains the class 
+                    - findMatch is returning me that same array
+                        - The score is really high
+                        - Who is returing the findMacth?
+                            - the tree
+                        - Check the similarity distance function
+                            - got the eqation wrong
+                            - try unvectorised format
+                                - You have v1,w1 and v2
+                                    - Try doing it with for loop like in the post 
+                                        - If you get the same anwer that mean you hab gotten the eqaution right
+                                            - The stack is working correctly
+                                            - p1 and v1 are 100% correct
+                                - I can conform the the equation is correct
+                        - I can draw the poses
+                            - I have a list 
+                                - [0x,0y.....]
+                                - I need need to draw black image 
+                                    - draw circle in the x,y coord
+                        - Check what size the coords in the main data frame is in]
+                            - 244 in get_extended_pose
+        - The returns data is not scaled to the correct size
+            - generate_dataset() returns me a unscaled data
+                - get_extended_pose() called map_function
+                    - get_data()
+                    - get_posenet_extended_pose()
+                        - why isn't 
+                    - The error is 
+                        - the I am getting the wrong scale factor
+                            - it should be from image szie to (244,244)
+                            - not from 178,512
+                            - How to get the correct image size?
+                                - 
