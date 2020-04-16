@@ -167,10 +167,6 @@ Classification model
                     - train:701
                     - val: (DONE)
 
-
-
-
-
                 -free-throw success,(DONE)(CHECKED)(CHECKED)
                     - train:221 (NEED MORE)(542)
                     - val: (DONE)
@@ -197,7 +193,8 @@ Classification model
                 - slam dunk failure: (DONE)
                     -train: 18 (NEED MORE)(46 total)
 
-                - steal success   
+        - total Train : 
+        - toal test : 
     - The video links are going to be same but the label links has to change
         - Check how I get ball possition 
         - I can just access it using row['actionSuccess']
@@ -1824,3 +1821,471 @@ Debug
                             - not from 178,512
                             - How to get the correct image size?
                                 - 
+        - Draw the poses that was received with the most similar pose
+            - Use SinglePlayerPosedDataGen
+                - draw_skel_and_kp([poses],frame,[255,0,0])
+                    - frame: pass in the frame as an empty black image
+                    - pose : 
+                        - What format does it accept?
+                            - {0:(x,y).....,} 
+                    - getScaleFactors(244,244,ARGS['inputImgH'],ARGS['inputImgW']) is called
+                        - that scale obtained is passed to getScaleFactors(244,244,ARGS['inputImgH'],ARGS['inputImgW'])
+                            - what is value?
+                    - Printing stuff gave me 
+                        - scale factor :(5.987704918032787, 3.3811475409836067)
+                            - Big -> Small
+                            - I need to crop the image as well 
+                                - So that the pose is big, and that become the out actual image
+                                - Then I need to map the image to size 244 
+                                - What I am doing WRONG 
+                                    - I am mapping the entier being image to 244,244 
+                                    - So it pose is taking really small part of the 244 image 
+                                        - Imagine this. You are trying to fit A Big image into smaller image
+                                            - The small part of the smaller image get even smaller in the new smalle image
+                    - Fix:
+                        - Use human boundingg boxes to crop the image
+                            - I dont think I can get the bounding box straight away (DONE)
+                                -  posenet from '@tensorflow-models/posenet'; has the function 
+                                    -  getBoundingBox(keypoint) in utils
+                                        - get 4 points, how  are theses 4 point found?
+                                            - These 4 points are the corners points 
+                                            - getBoundBox() finds 2 points of the opposite site
+                                                - left_top and right_bottom
+                                                    - {minX, minY, maxX, maxY}
+
+                                                        - What are are these points?
+                                                            - The four coord are 
+                                                                 -  {x: minX, y: minY}, 
+                                                                        - left-bottom
+                                                                 -{x: maxX, y: minY},
+                                                                    - right-bottom
+                                                                 - {x: maxX, y: maxY}, 
+                                                                    - right_top
+                                                                 - {x: minX, y: maxY}
+                                                                    - left-top
+                                                        - How are thse found?
+                                                            - for all the (x,y) of the body part 
+                                                                 - for x
+                                                                    - compare for maxX
+                                                                    - compare for minX
+                                                                - for y 
+                                                                    - compare for maxY 
+                                                                    - comapre for minY
+                                                        - For the bounding box coord
+                                                - drawpose 
+                            - Crop the ROI
+                                - Note the structure of posenetPred and bboxes
+                                    - {'dectionList':} -> [item,...]/item={}=1human ->{'score': , keypoints: []} -> [{}]
+                                    - {'bbox':} -> [item,...]/item=[...]=box ->{x:,y:}/coord   
+                                - Take in account of the bound error 
+                            - get the coord of the points in the cropped image
+                                - subtract it away from the lefttop
+                                - to test it draw the keypoints on the cropped image
+                                    - find the bounding box coords
+                                    - crop the image 
+                                         - for each roi 
+                                             - find the get the coord for the key points 
+                                             - draw circle on the key points 
+                            - Now can I properly visualization function now?
+                                - Do I need to convert the roi into a constant shape?
+                                    - No that the jobs of map map
+                                - All the roi is of different shape
+                                    - Convert them to 1 consistent shape 
+                                        - If I reshape it now what is the point of mapping function later on 
+                                        - Some bound 
+                                        - Good side of using this method is 
+                                            - it follows the current datapipeline 
+                                            - I highly suggest not changing the datapipline, because other part may be affected
+                                                - Hence, I will be using this method
+                                        - To use this method
+                                            - The posenetPred need to contain coords 
+                                                - That are relative to the cropped image 
+                                                    - Scaled to the image size of (244x244)
+                                            - At the end of I think I will need a function called
+                                                - preprocess(posenetPred)
+                                                    - that will take posenetPred and do the things mentioned above
+                                                    - Before passing it to the Dataset.generate_data_posenet
+
+
+                                    - Pass the Dataset.Gernerate_data_posent indicdually
+                                        - I am confused about 
+                                            -  getScaleFactors(imgW, imgH, originalImgH , originalImgW):
+                                              - is called by  getScaleFactors(244,244,ARGS['inputImgH'],ARGS['inputImgW'])
+                                              - okay: as long as I know row are the height of the image, everything should takecare of itself
+                                              - The poblem is:
+                                                - scaleFactor : (imgH , imgW) -> (rows, col)
+                                                - keypoints : {'x': 598, 'y': 509}}    -> [x,y]
+                                                    - is x the rows?
+                                                        - if yest than everything is is okay because [x,y] -> (row, col)
+                                                        - if no than: flip the keypoints list before passing it to mapToSquareImage (THIS IS THE CASE)
+                                                            - In reality we need to pass : mapToSquareImage([y,x] , (row,col))
+                                                                - we get [y,x] by doing  keypoints.values()[::-1]
+                                                            - The returned coords
+                                                                - [y,x] so we need to 
+                                                                - filp is back so that we have [x,y]
+                                                                    - set the values to the keypoints
+
+                                                        - How to check?
+                                                            - I must have used it whend drawing the points 
+                                                                - draw circle expect what?  
+                                                                    - (cols, rows)
+                                                                - Therefore I know 
+                                                                    - [x,y] == (col,rows)
+                                        - Write a preprocess function 
+                                            - that takes posenetPred and bboxes 
+                                            - updates the posenetPred to contain coordinates 
+                                                -
+                                                - scaleed to size 244 x 244
+                                    - Posenet Parameters 
+                                        - nmsRadius:80 or 60 (gives good reults)
+                                        - outputStride 
+                                            - 16(Few poses are wrong)
+                                            - - 32 (Poses are straight out wrong )
+                                            - 8 (better results)
+                                        - imageScaleFactor
+                                            - 0.1
+                                                
+                                            - 0.3
+                                                -  slightly imporved poses
+                                            - 0.4
+                                                - Same results 
+                                                - longer time
+                                            - 0.5
+                                                - same results 
+                                                - longer time
+                                        - image element/input image size
+                                            - making a it a square image 
+                                                - 1920 x 1820
+                                                    - 
+                                                - (600,600)
+                                                    - Many more pose are detected correctly in the zoomed in section
+                                                    - Few poses that were detected in the 1920 x 1980 are miss-classified
+                                                    - it is a bit faster 
+                                                - (500,500)
+                                                    - Many more possible missclassification
+                                                - (400,400)
+                                                    - Even worse
+                                                - (700,700)
+                                                    - A littele las miss classification
+                                                - (950,950)
+                                                    - Seems to be doing okay
+                                        - input resolution
+                                            - compared to (300 x 300)
+                                                - (200 x 200)
+                                                    - Not too accurate 
+                                                - (400 x 400)
+                                                    - Takes longer
+                                                    - look like nsm is not enough
+                                                - (600x600)
+                                                    - Really slow
+                                                    - But good results
+                                                    - Look like nsm is low
+                                                - (300x300 is best)
+
+Debug 
+    - coordinates are not scaling propley from cropped image to 244
+        - Am I passing in the un-updated keypoints
+            - No
+        - mapCoordToSquareImage must not be doing it' job
+            -  The first croped image has shape (239,123)
+            - The scale factor (244,244) <- (239,123) 
+                 - returned as (1.9, 1.02)
+                    - looks like it doing (24)
+                 - It should  be (1.02,1.9)                                                         
+
+
+
+
+
+
+
+
+
+
+                            - How will know the coordinates of the pose in the cropped image?
+                                - The scale os the imae pose won't change 
+                        - oringinal: (598.2205014603861, 509.00750141044625) , mapped:[3581, 1721]
+DEBUG
+    - the passed h,w is set ito ARGS[inputIMgH/W]
+        - 
+
+
+- Posenet Detection is not 
+    - Use Mask RCNN
+        - Cropped image
+            - Do I have a function where, given a bounding box, I can crop the image?
+                - I have a function where I sent the 2 coords and get the cropped roi
+                    - (top, left) and (bottom,right)
+    - There are 2 things that I can do 
+        - i can use the bounding boxes 
+            -  crop the roi in the bounding boxes 
+                - get hold of part of the image that is represented by the mask
+                     - I am drawing on the mask part of the image 
+                        -  So the draw function will probablly help me
+                        -  roi 
+                            - contains the image we want 
+                                - its generated from detectTeam
+                        -
+            - Goal: roi that has 
+                    - no background
+                    - blurred background
+                    - original background
+            - send it for posenet 
+    - Project ladder 
+        - Pass the image through Mask-RCNN
+            - With the bounding box coordinates 
+                - Can I crop the segmented image?
+        - In team detection write a function fitMaskRcnn
+            - this function return the postProcessed results (DONE)
+                - classID, confidence, boxe, masks
+        - Do I want to draw the team?
+            - Yes, please return me the frame where team is drawn?
+                - But then I will need to draw the actions as well later 
+                - Maybe I can draw when I have everything at once
+                    - I wont have to write new draw function, can just use TeamDetection by adding one more parameter
+                    - THat will be have to run 1 for loop at the end again
+                        - this same forloop is used to get the roi,team,teamColor ,teamName
+        - I want for each detected object 
+            - teamName, teamColor 
+                - I will need this for drawing the team
+            - roi , mask
+        - Do everything in the team detection file
+            - Option 1
+                - Make an empyty image of the same size 
+                - Put Roi There 
+                - Crop the roi
+                    - Resize it 
+                - Run posenet on the resized images 
+                    - Draw poses on the image 
+                - Results 
+                     - Posenet doe not detect any poses in the 
+            - Option 2 
+                - Crop using the bouding boxes
+                    - Give padding to the bouding boxes
+                - Better Mask-Rcnn is not detecting many players
+                    - Checking posenet whole image vs posenet individual pieces
+                - MAKE SURE THAT YOU PASS CLEAN CROPS TO THE MAIN IMAGE
+            - Apply historgram equalization on the cropped image?
+                - 
+            - Option 4 Boka effect 
+                - Apply guassian blur to the cropped image 
+                - Add the roi on top of the guassian image
+            - The more different the colour 
+                - The better the separtionation between objects
+                - The better the detection
+            - Frame rate is highly depended on 
+                - image size that goes into posenet
+                    - 600-500 = 0-2 fps
+                    - 450-400  = 4-5 fps 
+                    - 350 - 300 = 7 fps
+
+Writing video file 
+    - https://github.com/priya-dwivedi/Deep-Learning/blob/master/Mask_RCNN/Mask_RCNN_Videos.ipynb
+
+
+- I can split the object detetion mod
+- Train CNN (DOING)
+    - Cl
+
+
+function ConnectButton(){
+    console.log("Resnet50 Button added pushed"); 
+    document.querySelector('#cell-i7WWOkHXvJL7').children[2].children[0].children[0].click()
+}
+
+- How does wiriting a video work?
+    - Have 2 filePaths
+        - filename and newLocation
+    - Intesiate the VideoFileCilp class
+        - Tell VideoFileClip to proccess each frame
+            - .fl_image(f) : takes in a function that uses f to proccess the frames
+            - 
+
+GOAL
+    - Merge team and action classifcaiton (DONE)
+    - Render a video (DONE)
+    - Create a app using flask to 
+        - log the action of the 2 teams
+        - Add timestamp 
+            - Able to click the time stamp 
+                - Clicking the timestamp start the video from that time stamp
+    - Test thr range of posenet in the real life
+
+
+Goal 
+    - Test posent in room and see how good it does
+    - Integrate the 
+        - (Whole image) Action Classification + Gaze Direction
+    - Integreate the 
+        - (Whole raw image) Action Classification +  Ball Regression 
+    - Integreate 
+        - (Single pose) Action Classification 
+        - (Single pose) Action Classification + Team Detection (1v1)
+
+Writing notes
+    - Although .......,however,........
+
+Goal
+    - Filtering action 
+        - OPTION 1: find how much different is this current pose from the last one 
+            - Find weighted distance matching 
+            - How to test this?
+                - Draw on the op
+                    - the distacne of this poses with last one, to get sense of distacne
+                        - for the weigthedDistacne function I am expecting pose2vector to be 36 and posevector1 to be 72
+                            - I can write a new funciton
+                                - Repeating code 
+                                - What do I do with theta of posevector2?
+                                    - Treat it like the previous pose as the ground truth 
+                                    - 
+
+                            - Edit the function 
+                                - I will have to do extra computation in the tree search
+                                - Might affect the tree
+                        - Just pass in
+                            - poseVector2 : pervious pose 
+                            - poseVector 1 : The new pose with theata
+DEBUG
+    - DrawPose.draw_skel_and_kp(posesCopy,frame,[255,0,0],classes) is receiving 2 classes 
+        - fit is giving me 2 poses
+            - I want to be able to draw the classes for each sekelton
+                - the draw take the result from posenet, then what is it complaining about?
+DEBUG 
+    - operands could not be broadcast together with shapes (36,) (1,72) 
+        - previousFramePose : (1,72)
+            - Who is setting this?
+                - it might be because there were 2 poses
+                    - What am i going to do if there is 2 poses in the last frame?
+                        - And int the next frame there is only 1 pose
+                            - Compare it to both
+            - Is the last 36 elements of previousFrmaePsoe theta?
+                - No: prevPose (2,36) then in weigthed we are reshaping it to (1,-1)
+                    -  NEXT: WHAT TO DO, last frame had 2 poses new frame has 1 poses. How to do it such that it can be scaled to 10 players?
+                        - What are my options?  
+                            - Compare both poses with that single poss 
+                                - This is will work for 1v1, will it work for 5v5?
+                                    - Write a function that will do get the mean coordnate of the pose
+                                        - Compare the mean 
+                                    - Write a function that will get the middle coordinate of the bounding box?
+                                        - What if it is a new player in the exact same location?
+                                    - Even in 5v5, for a single player we compare it's pose with all the other players pose in the last frame 
+                                        - We will avoid searching VP-TREEE
+                                        - Will the generated action be accurate?    
+                                            - If the distance is really LARGE, then we move on to next pose.
+                                            - IF the distacne is really SMALL, then we change to that particular pose 
+                                                - But you will still be changing the pose
+                                        - Using team information (NOT WORK)
+                                            - So in 1v1, if we have 2 poses in the last frame and 1 pose in this frame
+                                                - Figure out which team
+                                                    - Compare the poses with matching team
+                                                        - What if team of the both poses are same?
+                                                        - Therefore it will not work
+                                    - Only check every 16 frames 
+                                        - 
+Measuring the distnace of pose in last frame and this frame (DONE)
+    - Subporblem: I have to know which pose is which, aka, be able to track poses
+        - TeamColor
+        - Center of the bounding box
+            - Get the center of the bounding box , using bboxes 
+                - I will be given coodrinate of bounding boxes [(p1,p2,p3,p3),....]
+                    - I will have to find the center of the  boxes 
+                    - Compare it with cneters from the last frame
+                         - We will need to store the center of the last frame 
+                    - Return 
+                        - action
+                            - I have the bbox from the input 
+                            - Store the previous freame info
+                                - info: {center : action}
+                                - What does bboxes look like?
+                                    - bboxes: [ [p1 , p2] , ... ] (from getBoxCoord)
+                            - End Goal: 
+                                - I have a dictionary with centers and action from the last frame, I have another dictionary  with centers, 
+                                    - if there exist a closest center, find it 
+                        - a key that refers to that poses 
+            - How to integreate Tacker in to ActionClassificaton Cosine?
+                - The very first frame
+                    - I fit for the whole image
+                    - set the tracker
+                        - classes, bbox 
+                - The second frame onwards
+                    - Tracker :   
+                        - call track : 
+                            - should return: {(closestMidPoint):actionClass,....} (Done)
+                            - store a dictionary : prevFrameMidpoint -> pose
+                            -  For the poses whos' closest mid point is found 
+                                - check if they are the same pose by measuring the distance
+                                    - True: Replace the ActionClas
+                                    - Flase : Do not do anything 
+                                - update the the tracker,and prevFramePose
+                            - 
+    - Testing
+        - Draw bouding boxes (DONE)
+        - Draw a circle in the previous center 
+            - a line from new center to previous cnenter
+        - OPTION 2: keep the same action if the min distacne to the most similar pose is greater than some threshold
+            - How do I get access to the distance?
+                - similarPoses : ([score] , [poses])
+        - Which option  is better?
+            - Option 2, 
+                - we dont have to do more calculation
+                - It is more easier, just check the threshold,
+                - A good way to test is 
+                    - Print the score on top, so I can have look on 
+                        - the score changes with the poses
+                            - Eg. If the pose change from walk to run
+                                - score changed from 20 to 30
+                                    - Okay, I looked at the score changes
+                                    - The pose change is all between 10 to 13 
+                                    - It is not the like the next poses is an outlier 
+                                        - It still thinks that the next pose is really good match
+                                            - therefore, option 2 won't qork
+
+Goal 
+    - Applying Multi-threading   
+    - Find ball using gaze 
+    - Find ball using regression
+
+Applying Multi-threading
+    - Do I want to crop the image 1 by 1?   
+    - I want to send the cropped image to posenet simultaneously 
+    - I want to also search vpTrees for the poses simultaneously.
+    - Following tutorial
+        - https://www.pyimagesearch.com/2019/09/09/multiprocessing-with-opencv-and-python/
+        - get some important numbers
+            - number of proccess
+                - proc
+            - proccess id
+        - create payload 
+            - [{},{}]
+        - Pool Class
+            - Creates the python process of respective core of the processor
+                - proc
+        - Map
+            - Takes payload list 
+            - Call function on each correct
+                - over input image paths in the payload
+        - How to combines results from the payload
+    - How do I make a simple test?
+        - Do it on image yyyy
+            - load image (0   `)
+            - Load team detection
+                - Pass it through fast rcnn
+                - make 10 croped images (DONE)
+        - Spawn 10 thread 
+            - https://realpython.com/intro-to-python-threading/
+            - pass the payloads
+                - Try: 
+                    - Proccess_image() to call getting pose/action via TeamDetect 
+                        - Will each procces spwan new instance of the function and run independely?
+                    - 
+            - The problem with threading is
+                - It does not happen simulatenously 
+                - It is still sending request 1 by 1 
+        - Multi-thread and use all 8 cores
+            - 1 pose
+                - 0.226
+            - 2 pose 
+                - 0.412 per pose
+            - 3 pose
+                - 0.659 per pose 
+

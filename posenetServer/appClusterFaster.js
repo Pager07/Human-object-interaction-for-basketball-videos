@@ -1,13 +1,15 @@
+var cluster = require('cluster')
+var numCPUs = require('os').cpus().length;
 const tf = require('@tensorflow/tfjs-node');
 const posenet = require('@tensorflow-models/posenet');
 var express = require('express');
 var bodyParser = require('body-parser');
 var pixels = require('image-pixels');
-
+var async = require("async");
 
 
 var boundingBoxes = [];
-
+var poseDetectionResults = {}
 const {
     createCanvas, Image
 } = require('canvas')
@@ -18,9 +20,12 @@ app.use(bodyParser.urlencoded({limit: '10mb', extended: true}))
 app.get('/getImage',function(req,res){
     var data = JSON.stringify({name:'Sandeep'});
     res.send(data);
-})
 
-app.get('/loadModel', async function(req,res){
+})
+        
+
+        
+loadModel = async function(req,res){
     console.log("Loading model");
     net = await posenet.load({
         architecture: 'ResNet50',
@@ -30,26 +35,11 @@ app.get('/loadModel', async function(req,res){
         multiplier:1
         });
     console.log("Model Loaded!");
-    res.send("Model Loaded");
     
-})
+}
+loadModel()
 
-
-app.post('/postImage' ,async function(req,res){
-   const imgBase64 = req.body.imgBase64;
-   const poseKeypoints = await getPoseDetection(imgBase64) 
-   res.send(JSON.stringify({detectionList:poseKeypoints}))
-
-});//End of app.post and asyn function
-
-app.post('/getBBox' ,async function(req,res){
-    res.send(JSON.stringify({bbox:boundingBoxes}))
-    
-});//End of app.post and asyn function
-
-
-// L
-// loadModel = async function(req,res){
+// app.get('/loadModel', async function(req,res){
 //     console.log("Loading model");
 //     net = await posenet.load({
 //         architecture: 'ResNet50',
@@ -59,22 +49,46 @@ app.post('/getBBox' ,async function(req,res){
 //         multiplier:1
 //         });
 //     console.log("Model Loaded!");
+//     res.send("Model Loaded");
     
-// }
-// loadModel()
+// })
 
 
-//
-const getPoseDetection = async(imageUrl) => {
-    console.log('start');
-    // const net = await posenet.load({
-    //     architecture: 'ResNet50',
-    //     outputStride: 32,
-    //     inputResolution: { width: 257, height: 200 },
-    //     quantBytes: 2
-    //     });
+app.post('/postImage' ,async function(req,res){
+    const imgBase64List = req.body.imgBase64.split('next');
+    const imgBase64IndexList = []
+    imgBase64List.map((imgBase64,index)=>{
+        imgBase64IndexList.push([index,imgBase64])
+    })
+    async.each(imgBase64IndexList , getPoseDetection , function(err){
+        if(err){
+            console.log("Error occured when feteching one of the pose")
+            console.log(err)       
+        }else{
+            console.log('Sending Poses!')
+            res.send(JSON.stringify(poseDetectionResults))
+        }
+        
+    })
+        
+    
+
+});//End of app.post and asyn function
+
+app.post('/getBBox' ,async function(req,res){
+    res.send(JSON.stringify({bbox:boundingBoxes}))
+    
+});//End of app.post and asyn function
+
+
+
+const getPoseDetection = async (imgBase64Index, callback) => {
+    //console.log('start');
+
     const img = new Image();
-    img.src = imageUrl;
+    img.src = imgBase64Index[1];
+    const imgIndex = imgBase64Index[0]
+
 
     const canvas = createCanvas(img.width, img.height);
     const ctx = canvas.getContext('2d');
@@ -83,13 +97,7 @@ const getPoseDetection = async(imageUrl) => {
     const imageScaleFactor = 0.3;
     const flipHorizontal = false;
     const outputStride = 8;
-    //const pose = await net.estimateMultiplePoses(input, imageScaleFactor, flipHorizontal, outputStride);
-    // const pose = await net.estimateMultiplePoses(input, {
-    //     flipHorizontal: false,
-    //     maxDetections: 5,
-    //     scoreThreshold: 0.5,
-    //     nmsRadius: 30,
-    //     });
+
     const poses = await net.estimateMultiplePoses(input, {
         flipHorizontal: false,
         maxDetections: 2,
@@ -103,6 +111,15 @@ const getPoseDetection = async(imageUrl) => {
         var box = posenet.getBoundingBoxPoints(pose.keypoints);
         boundingBoxes.push(box)
     });  
-    return poses;
+  
+    poseDetectionResults[imgIndex] = {detectionList:poses}
+    //console.log(poses)
+
 }
 app.listen(3000);
+
+
+
+
+
+
