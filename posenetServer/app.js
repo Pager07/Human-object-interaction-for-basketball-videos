@@ -25,7 +25,7 @@ app.get('/loadModel', async function(req,res){
     net = await posenet.load({
         architecture: 'ResNet50',
         outputStride: 32,
-        inputResolution: { width: 300 , height: 300 },
+        inputResolution: { width: 300 , height: 300},
         quantBytes: 4,
         multiplier:1
         });
@@ -92,7 +92,7 @@ const getPoseDetection = async(imageUrl) => {
     //     });
     const poses = await net.estimateMultiplePoses(input, {
         flipHorizontal: false,
-        maxDetections: 2,
+        maxDetections: 1,
         minPoseConfidence: 0.15,
         minPartConfidence:0.1,
         nmsRadius:20,

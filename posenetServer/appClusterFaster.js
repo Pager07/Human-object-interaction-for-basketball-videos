@@ -1,5 +1,3 @@
-var numCPUs = require('os').cpus().length;
-
 var express = require('express');
 var bodyParser = require('body-parser');
 var workerpool = require('workerpool');
@@ -7,26 +5,6 @@ var workerpool = require('workerpool');
 var app = express();
 app.use(bodyParser.urlencoded({limit: '10mb', extended: true}))
 
-app.get('/getImage',function(req,res){
-    var data = JSON.stringify({name:'Sandeep'});
-    res.send(data);
-
-})
-
-
-// app.get('/loadModel', async function(req,res){
-//     console.log("Loading model");
-//     net = await posenet.load({
-//         architecture: 'ResNet50',
-//         outputStride: 32,
-//         inputResolution: { width: 300 , height: 300 },
-//         quantBytes: 4,
-//         multiplier:1
-//         });
-//     console.log("Model Loaded!");
-//     res.send("Model Loaded");
-    
-// })
 
 var pool = workerpool.pool(__dirname + '/workerThread.js' );
 

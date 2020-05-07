@@ -2241,10 +2241,246 @@ Measuring the distnace of pose in last frame and this frame (DONE)
                                             - therefore, option 2 won't qork
 
 Goal 
-    - Applying Multi-threading   
-    - Find ball using gaze 
+    - Applying Multi-threading (DONE)
+    - Find ball using gaze (DONE)
+    - Integrate tracking (DONE)
     - Find ball using regression
 
+
+Integrating tracker
+    - fit()
+        - this will return the action classes and prveFrameMidpoints given poses and bboxes 
+        - get the classes,prevFrameMidPoint 
+        - Am I passing this 1 by 1?
+            - Yes, I am passing this 1 by 1 but I also have the non 1 by 1 version if needed in 
+                - That means to use this class, I will have to get actions in a batch by calling fit() using posenetPredCombined and bboxes
+                - getActionClass() will have to made to handel batches
+                     - It will have to find poses seperatly, save it posenetPredCombined(so that this independent)(DONE)
+                        -posenetPredCombinedAction not posenetPredCombined. becuase posenetPredCombined should contain  poses that are mapped to the image, used for gaze detection. 
+
+                     - This function finally takes in the posenetPredCombined and the boxxes from posenet
+                     - I will no longer have to save actions, because,getActionClass will get action for all the poses(DONE)
+                     - I will have to bboxes from posenet sperartly, because, the getActionClass take posenet bboxes(DONE)
+                     -  getActionClass(poses,boxes), 
+                        - Do I still need the output?
+                            - How was the variable from this function used perviosly?
+                            - classes,
+                                - Yes, this is the frame_actions list 
+                            - posesCopy,
+                                - The coordinates are mapped to big image 
+                                - Added to posenetPredCombined
+                                    - Everything should still be fine, i am just getting the posenetPred straight from server 
+                            - boxes,
+                                - This was not being used
+                            - prevFrameMidpoints
+                                - This is a new thing that is being returned 
+                                - To show the tracking ability 
+                        - fit( imgH,imgW)
+                            - fit is thinking we got the result from 1 big image
+                                - Hence, its expects the same h,w for the poses 
+                            - But we have diffferent roi sizes?
+                                - is the size of ROI constant?
+                                    - who produces roi?
+                                        - the roi is resized in resizeRoi functinon     
+                                            - the width is constant but the height is not
+                                                - OKAY I FKED HERE, I CANT STOP EITHER. BECAUSE I NEED THE ACTION SUPRESSION ABILITY 
+                                            - maybe inf
+                        - Tracker only works 1 big image
+                            - It expects the poses to be relative to the big image 
+                            - while fit was made to handel for 1 
+                        - The best thing to do is to separte Tracker and ActionClassifctioon
+                            - Advantage
+                                - We can still use the same datapipe line
+                            - Disadvantage 
+                                - We will have to remake/adjust tracker to fit the bigger data pipeline                                                    
+
+        - This will mean I will have to change 
+            - fixing updatePosesClasses(stackedPoses,posesClasses,bboxs)
+             - stackedPoses : np.hstack((poses,theta))
+                - Why do we need this?
+                    - because we need to find the weigthed distance between current pose and previous pose
+                        - currentpose: [x,y......wx,wy]
+                            - I will regnerate this using ActionClassCosine 
+                        - pervious pose : [x,y......wx,wy] (DONE)
+                            - setPreviousFramePose
+                                - expects [x,y......] not posenedPred 
+                        - How do I know which poses to compare?
+                            - track() funtion sort this for us
+                                - if go and for each bbox in boxxs it finds closest action and midpoint in the the last freame
+                                     -{midpoint:Action}
+- Debug 
+    - The ball is being drawn at a different place 
+    - The bounding boxs being drawn are different 
+        - 
+    -  The action are a bit different
+        - I am getting a different poseDetectionList than before
+            - I am getting differnt ball locatin becuae of of different intersection
+                - I am getting different intersection becasue of different poses
+                -  get action class gets the poses for me, is the resziedroi different?
+                    - 
+    _ I dont understand why I need  
+        - setTracker
+            - To set the mid points of the last frame
+        - setPreviousFrame
+            - To the poses of the last frame
+        - Fixe the Tracker to accept only 1 type of bboxes
+            - setPreviousFramePoe 
+                - It has to utilize the ActionClassification stackPose..
+                    - so it needs the bboxs in the style of posenet
+                        - frame_action : 
+                            - ['walk', 'shoot']
+                            - it need: [[walk] ,shot]
+                    - update()
+                        - posesClasses[count] = action
+                            -  midPointToAction
+                                - How is the action set in this dict?
+                                    - 'walk' or ['walk']
+                                    - The first one 
+                                - save the boxs from getActionClass
+                                     classes[0][0],posesCopy,boxes
+- Debug 
+    - Tracker.getMidPoint
+        - 'int' object is not subscriptable
+    - Create a fake test dataset 
+        - 2 frames
+
+    - getBoxCoord(bboxes,frame.shape[0],frame.shape[1])
+        - bboxes coord?
+    - Tracker.convertBboxsToMidPoint(bboxs)
+        - get the midpoints of the bboxes 
+    -  Loop over bboxs
+        - What are bboxs?
+
+- Deubg 
+    - frame_actions is none 
+    - I tracker is placed before GazeModule, The ball position is affected
+        - (posenetPredCombined,frame_bboxs,frame_actions)
+            - they share posenetPredCombined
+            - frameactions
+
+
+Set the video
+
+
+
+drawPred(image,actionClass, confidence, left, top, right, bottom, colour,yolo=False,roi=None,mask=None)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Finding ball using Gaze
+    - 2 Ways 
+        - Crop 
+            - Does TeamDection file have poses of the player relative to big image?
+                - TeamDetection: No we are only drawinng the class and actionclass
+                    - I have access to poses coordniate of the cropped imags 
+                    - If I can tranfrom these coordinates 
+                        - to the big image 
+                    - draw the lines there 
+                    - find intersection
+            - Goal Prject Ladder
+                - Get poses coordinates in the cropped image to big image (DONE)
+                    - Map the coordinate to cropped image (DONE)
+                        - What is the pose structure?
+                            - { score: 0.8128076037939858,
+                                keypoints:
+                                 [ [Object],
+                                   [Object],
+                                   [Object],
+                                   [Object],
+                                   [Object],
+                                   [Object] ] }
+                        - Chnage the keypoints coords
+                            - need original dim 
+                                - get it from roiBokaImage
+                            - need cropped image dim
+                                - get it from the bboxs from faster-rcnn
+                                    - It  the box form posenet or faster-rcnn
+                                        - Faster-rcnn, 
+                            - Find the scale-factor
+                            - Multiple 
+
+                    - Mape the coordinate to the main image    
+                        - What does boxes contain?
+                            - boxes = getBoxCoord(bboxes,imgh,imgw):
+                                - What is the bboxes?
+                                    - bboxes is the coords from the posenet
+                                        - what does this posenet server return?
+                                            - bboxes = {bbox:[]}
+                                        - We dont have to worry about the boundary condition
+                                            - because we know the point lies in the image
+                                - get top(height/rows)-left(cols/width) coord of the bounding box used to crop the roi
+                    - Test
+                         - Try on a single image: To get the coordinate 
+                - Combine all the detection into 1 posenetPred (DONE)
+                - Gaze detection
+                    - Take a bounding box and check how many gaze estimation line up
+                        - write a function to initialise the all the lines per frame (DONE)
+                            - if there is no intersection them
+                        - write a function that finds how many vision line intersect with that bbox 
+                            - make boka return left,top,right,bottom
+    - Integreate the gaze detection to TeamDetection File
+        - filter the argsmax using action
+            - find the index of all max
+            - sort the index based on action
+                - All possible action
+                    - ["unknown","block","pass","run","shoot","ball in hand","defense","no_action","pick","walk","discard"]
+                    - We want to trade space for time here 
+                        - Map a key-value map for action 
+                        - map action to prority
+                    - Can I draw a rectange using 1 coord?
+
+
+
+
+
+DEBUG:
+    -  'theta1' is not defined
+        -  set_vision_lines(posenetPred)
+        - What does draw_extended_line do?
+            - returns theta1
+    - the length of poses is diffferent from the number of bboxes
+        - it because for some the resized image, have no poses
+    - How do I visually test this module?
+        - I have the pose
+            - I can draw the poses
+        - I have the general line 
+            - I can draw the general line
+        - I have know who are are touched the most
+            - Draw bounding box for all poses 
+            - if the is the max, then draw it with different color 
+        - By doing this, we should see if the number in the counter list matches or not
+            - 
+    - I have the following functions 
+        - draw_keypoints(poses,img)
+        - draw_general_line(out_img,p5,theta3,color)
+        - drawPred(image,actionClass,team, confidence, left, top, right, bottom, colour,roi=None,mask=None)
+    - Ladder
+        - Get hold of the image (DONE)
+        - Draw gernera line
+
+
+
+
+            
+
+
+
+
+Can we concatnate many image?
+    - No, 3 image will take 300x300
+        - 1 image will be of size: 
 Applying Multi-threading
     - Do I want to crop the image 1 by 1?   
     - I want to send the cropped image to posenet simultaneously 
@@ -2288,4 +2524,339 @@ Applying Multi-threading
                 - 0.412 per pose
             - 3 pose
                 - 0.659 per pose 
+    - Multi-threading in Nodejs
+        - cluster
+            - 8: 0.99
+            - 
+        - Servers that handled the request
+            - 3,6,2,5    ,7,8,4,1
+            - All the eight cores are being used but the internet seems to be slowing it down
+
+        - Once mapping is finished, how to send rest of the items?
+
+Debug
+    - pool.map on the last item does not work
+        - when I am creating playloads
+            - 11 does not pass through because of fit 
+            - id should refer to the index of the item in the playloadlist
+Debug 
+    - Decreasing the number of proccess that is sending to client reduces the time taken in client
+        - I think: The time taken is super long because, all 8 cores are busy sending img th server
+    - Only send using 1 core
+        - Try: 
+            - 1 core sends all the images to the server at once
+                _ I dont need 8 servers, I only need 1 server 
+            - Up receving the the request parse the image 
+            - Fork 8 cpu cores
+                - 
+            - I have a list of data [data,data....]
+                - I have function that that I want to each data through
+                - I want to do it in parallel
+                    - Will the function running in multiple cores have access to variables in master?
+                    - The fork needs to be completed independ
+                        - They all need to have they own models 
+                            - So I think i can it such that workers wont need master,but putting all posenet inside the worker 
+                            - But I need a way workers to be able to the master what they have found,so master can send it back
+                        - They dont need servers 
+                - For each image get the url (Async parralla FAILS!!)
+                    - playload : ['...next...']
+                    - make getPoses send the playload 
+                - Use Nodejs worker thread
+                     - Try with deleteing the worker
+                        - I will have to reload the net agian and agian
+                        - Wont work
+                    - How many workers can I have?
+                        - number of CPU
+                    - Try reuing the same workers 
+                        - No delete the workers
+                        - Is there a way to pass data to the worker
+                            - Seprate the the construction of workers from sending data
+                                - Because the next frame we wont need to recreate the workers thus wont need to recreate the model
+                                - Create workers for all the 
+                                - Folloing Tuotrial: https://medium.com/lazy-engineering/node-worker-threads-b57a32d84845
+                                    - distributeLoadAcrossWorkers(cpuCount); 
+                                        - Creates the workers
+                                        - bigArray.length : array with numbers to be sorted 
+                                        - .fill() : 
+                                        - sortArrayWithWorker(arrayToSort)  
+                                            - intitalizes the worker with woker-threads-pool
+                                            - 
+
+                                - Reading the docs :https://nodejs.org/api/worker_threads.html#worker_threads_worker_parentport
+                                    - we can send message back and forth using parentPort
+                                - How to use pooling
+                                    - what doe creating a pool of 10 workers mean?
+                                        -  a set of working thread 
+                                    - how to get the results of the worker
+                                        - Each item gets sents to the worker as Promise
+                                        - Data coming through 
+                                            - {imgIndex: imgIndex ,detectionList:poses , bbox: boundingBoxes}
+                        - The model only get loaded I send a request
+                             - Now the model get loaded when I start the server
+
+Debug
+    - The promises never complete  
+    - When the master sends the message, how does the worker know to start running the code?
+    - 
+        - getPoseWithWorker gets called 
+            - a worker is selected
+                - Trying sending 1 image om;y
+                - the image gets send as workerData
+                -SEE: Will it run the else bock all over agian?
+                    - Yes, the whole else casue get loaded
+                    - SEE :When acquire gets called in the master, is it sending a message t
+Debug 
+    - npm installing 
+        - https://github.com/Automattic/node-canvas/issues/1512
+            - Says it might not work for node version 13
+            - downgrade it to  v10.18.0
+            - will poolifer work?
+        - Shuting down all proccess
+            -   killall -9 node
+
+Debug
+    - Image given has not completed loading
+        - The net variable is saved and can be resued
+            - segmentsResults[0]
+                - [ { imgIndex: '0', poses: [ [Object] ], bbox: [ [Array] ] } ]
+            - segmentsResults[0][0].poses
+                - [ { score: 0.8128076037939858,
+                    keypoints:
+                     [ [Object],
+                       [Object],
+                       [Object],
+                       [Object],
+                       [Object],
+                       [Object] ] } ]
+                - 
+    - How can I load the model up on start up
+        - Done, just register a new function and run the shit for all workers in start 
+    - Why is only finding poses for 1 image?
+        - Am only looping over 1 image?
+            - No, I am looping over bothe image 
+        -  UnhandledPromiseRejectionWarning: Error: Image given has not completed loading
+            - This happens when the passed parameter is not the image string
+        - The time taken
+            - 2.5
+
+Reshape the output like normal data
+    - should return poses, boxes 
+        - 
+    - What does the data look like
+        - The output from the server:
+             - {detection:[ prmoise1Result, promise2Reslut]}
+                - pose
+    - I am going to use multi-thread?
+        - Yes
+            - because it imporves the time, 
+            - Something to write/draw the picture about 
+
+        - No
+            - it slighlty changes the data pipeline
+                - Now we are not get thing posees 1 by 1 
+                - We have to have a storage of all the cropped image 
+                    - Send them to server
+                        - Get poses for all poses 
+                    - Draw them all 
+                - I will have to change
+                    - YOLO
+                    - MASK- RCNN
+                    -
+            - Even with cluster, I will still have to change 
+
+Debug:
+    - mapping from largerCroppedImage to croppedImage is not right
+        - mapPosesToCroppedImage is wrong: 
+            - mapPosesToCroppedImage(posenetPred,enlargedCroppedH,enlargedCroppedW,croppedH,croppedW)
+                -  mapKeypointsPosition( pose,enlargedCroppedH,enlargedCroppedW,croppedH,croppedW)                           
+                -  The scale factor caluclation problem?
+                    - No, the scale factor are right
+                - What is the original posenet coords relative to?
+                    - ResizedRoi/largerCroppedImage(WRONG)
+                        -getActionClass(resizedRoi)
+                            - ActionClassificationCosine.getPoses(resizedRoi)
+                            - resizedRoiWithPose = drawPose(resizedRoi)
+                                - Draws the shit right
+                                    - How does this get the poses?
+                                        -poses,boxes = ActionClassificationCosine.getPoses(resizedRoi)
+                                        - resizedRoiWithPose = DrawPose.draw_skel_and_kp(poses,resizedRoi,(255,0,255))
+                                    - I am using getActionClass to get the poses
+                                        - ActionClassificcation.fit() chnages the poses
+                                            - posenetPred = posentPredPreprocess(posenetPred,bboxes,inputImgH,inputImgW)
+                                                - It change the image 244x244
+                                                    - This is will completly destroy the image aspect Ratio
+                                                        - OH WELL....TO LATE NOW...
+                    - mapPosesToMainImage(posenetPred,top,left) is wrong 
+                        - I am tring to map the croppedImage to main iamge
+                            - mapKeypointsPositionToMainImage(pose,top,left)
+
+
+
+                - Does mapCoord give right answer for 1 coord
+                    - sf shape
+                        - (w,h)
+                    - What am I passing to mapCoord?
+                        - mapCoord(list(keypointPosition.values()),scaleFactor)
+                            - shape of kepointPosition : (w,h)
+                            - This is right
+                            - current equation is just: sf * x/y
+                - Oberservation
+                    - The legth of the image is wway off
+                        - why am I getting so small length
+                            - eg. 0.29 * heght
+                    - Try drawing the raw oput on the resizedRoi, does it fit?
+                        - No, the output from posenet is not for resizedRoi
+                    - The bounding box seem to be shifted a bit to the right 
+                        - what is top and left?
+                            - its the top,left coords of the original image 
+                        - 
+Debug 
+    - The ball is not drawing properly
+        -  I forgot why I did this 
+            - if VISION_LINE[index] != False:
+    - operands could not be broadcast together with shapes (3,) (135,48) 
+
+Goal 
+    - Draw The orignial, poses, and simliar pose side by side
+        - I need to the cropped and resized rio with pose drawn
+            - I need what testScaledCroppedKeypoint does
+                - How can I not change the data pipline and still use what I got
+                    - I can make testScaledCroppedKeypoint return a list of ROI(Cropped and Scalled) so that in deubgged I can 
+                      stich them together?
+                        - How can I draw poses on the cropped roi?
+                            - I need it is this format so that pose_dict : {0:(x,y)......}, so that I can utilize the draw.drawfunction
+                            - change the images size from 300 x 300 
+                            - The posenet is only detection 1 person
+    - Get test data
+        -  Resized Roi
+            - Save the resized Roi
+                - Are the resizedRoi already Saved?
+                    - No. So svae them 
+                    - Do it for another image
+            - load it in test
+
+Interaction Detection
+    - Renset 
+        - Trained with the pose scaled to 244x244 image
+        - Making the dataset 
+        - Classification tas
+    - Distance measurement
+        - Weighted distance
+            - follow move mirroe explaination
+
+Results 
+    - Ball (DONE)
+        - What metric am I going to use?
+            - MSE 
+        - Get test data
+            - Figure out how many images are there?
+                - 269 images
+            - Figure out what is the coord?
+                - The coordinate are wrong for some reason
+                    -  w,h,w,h 
+                    - 471x264
+                    - 1375,351
+    - Localization  
+        - How should I measure the localization
+            - Experiment to find different sigma value
+            - CHECK FPS
+            - Check detection rate
+                - How do I check detection rate?
+                    - Use IoU to measure 
+                        - I will need to find IoU of YOLOV3 
+                        - I will need to find IOU of MASKRCNN
+                            - Follow https://www.pyimagesearch.com/2016/11/07/intersection-over-union-iou-for-object-detection/
+                                -  Find how to IoU of 1 to 1 box 
+                                    - The example are given uses box:(left_top),(right_bottom)
+                                        - We want it such that box(left_top),(right_btoom)
+                            - How to find IoU where there are multiple prection
+                                - For each predicted bounding we find the best IoU
+                                    - Compare it will all the ground truth
+                                        - find the highest IOU
+                                            - if iou >= 0.5
+                                                - TP
+                                            - if iou < 0.5 
+                                                - FP (wrong detection)
+                                        - number of ground truth with no predicted boxes
+                                            - FN 
+                                    - How to collect the dataset
+        - Get test data (DONE)
+            - Each image with left_top and right_bttom coord
+        - Calculate IoU for batch of images (DONE)
+            - Figure out TP, FP , FN 
+                - 
+                - Figure out precision and recall 
+    - Action Interaction 
+        - Fk it, I am not going to create a new dataset
+            - I am going to show the training and vaildation accracy
+            - I am going to pretend like the validation precision and call were for the test set 
+            - For VP tree method I will will have to find Recall, precision, 
+        - Get Confusion matrix 
+            - I cant use the confusion matrix. 
+        - Problem with CNN training 
+            - Because the labling was automated 
+            - The CNN is correctly predicint shit but the labels are wrong 
+                - So the accruacy is stablizes
+        - Create a test set 
+            - for 11th frame
+            - CNN
+                - Export CNN
+                    - What files do I export?
+                - Clear up CNN dataset (DONE)
+                    - Make prediction use CNN
+                - Get pecision and recall score 
+                    - Take Macro average
+                         - will compute the metric independently for each class and then take the average (hence treating all classes equally)
+            - VPTREE
+                - filter the images to only contain the poses in CNN test data
+                    - How can I know which image have been removed?
+                        - What does the CSV file contain?
+                            - I can get all the names of the image in the test set 
+                                - if 
+
+
+Debug 
+    - After the models scores are printed, the gtboxe are like what were passed
+    - but the ides are not 
+        - model_scores[model_score_thr] only returns me 1 vale
+            - What is model_scores?
+                - its generated from get_model_scores
+                    - its a dictinary from confidence scores?
+            - What is the model score threshold
+    - What is happening?
+        - I think I am appending it to wrong...?
+            - pred_boxes_pruned[img_id]['boxes'] ,yhat is different
+                - 
+
+
+
+
+
+
+
+
+
+
+
+Meeting Question
+    - The project code, what should I submit?
+        - Am I allow to submit ipynb notebook files 
+        - Read me files
+            -  
+    - The oral exams, how should I perapre for it.
+        - What kind of question would be asked 
+            - 25 mins , 5 mins set up
+                - 5-7 min presentation
+                    - keypoint
+                    - chanllanges
+                    - problem sloved
+            - 15-20 min for sofrware demo
+                - main pervoius
+                - show acccrucy, images 
+                    - probelms , things are good at 
+                    - live demonstartiong 
+            - question section 5 mins
+                -   
+
+
 
