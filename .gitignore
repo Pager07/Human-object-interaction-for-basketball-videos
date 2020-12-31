@@ -1,4 +1,4 @@
 /dataandmodles/**
 !/dataandmodles/**/.gitkeep
 
-/.ipynb_checkpoints
+.ipynb_checkpoints
